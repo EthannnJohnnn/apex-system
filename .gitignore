@@ -1,0 +1,12 @@
+node_modules/
+dist/
+target/
+tmp/
+.tools/
+.env
+.env.*
+!.env.example
+*.log
+
+/output/
+/branding/*.zip
