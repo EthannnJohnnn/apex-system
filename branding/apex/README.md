@@ -13,11 +13,15 @@ Every wordmark is converted to paths, so recipients do not need the font install
 | --- | --- |
 | Website logo on a light surface | `svg/apex-logo-light.svg` |
 | Website logo on a dark surface | `svg/apex-logo-dark.svg` |
+| Red website logo on a light surface | `svg/apex-logo-red-light.svg` |
+| Red website logo on a dark surface | `svg/apex-logo-red-dark.svg` |
 | Symbol without text | `svg/apex-mark-light.svg` or `apex-mark-dark.svg` |
+| Red symbol without text | `svg/apex-mark-red-light.svg` or `apex-mark-red-dark.svg` |
 | Single-color printing | `svg/apex-logo-black.svg` or `apex-logo-white.svg` |
 | Transparent logo for presentations | `png/apex-logo-light.png` or `apex-logo-dark.png` |
 | Transparent square symbol | `png/apex-mark-light.png` or `apex-mark-dark.png` |
 | Browser tab icon, automatic light/dark colors | `favicon/favicon.svg` |
+| Red browser tab icon, automatic light/dark colors | `favicon/favicon-red.svg` |
 | Legacy browser icon | `favicon/favicon.ico` |
 | iOS home-screen icon | `favicon/apple-touch-icon.png` |
 | Android/PWA icon assets | `favicon/icon-192.png` and `favicon/icon-512.png` |
@@ -42,6 +46,7 @@ downscale of the large symbol. The home-screen icons use the full mark.
 | Suggested background | `#F5F7FA` | `#10151C` |
 
 Use the provided dark version rather than applying an automatic invert filter.
+The red variants reuse the same vector shape and Outfit wordmark as the original blue files.
 Keep the proportions intact. Use the symbol alone where the full wordmark is too
 small to read. Maintain clear space of approximately one crossbar-square width
 around the artwork; leave room beyond the file's built-in canvas padding as needed.

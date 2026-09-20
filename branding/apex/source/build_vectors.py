@@ -33,7 +33,7 @@ scale = 110 / (y1-y0)
 word_width = (x1-x0)*scale
 logo_width = round(236 + word_width + 32)
 
-# Apex adaptation of the approved retro direction: stepped A with a blue crossbar.
+# Apex adaptation of the approved retro direction: stepped A with a colored crossbar.
 A = 'M120 0H180V30H210V60H240V90H270V342H210V222H60V342H0V90H30V60H60V30H120ZM90 90V162H180V90Z'
 def mark(primary, accent):
     return f'<path fill="{primary}" fill-rule="evenodd" d="{A}"/><path fill="{accent}" d="M90 162H180V222H90Z"/>'
@@ -47,6 +47,8 @@ def wrap(body, width, height, title):
 themes = {
     'light': ('#4C75A3', '#86ADD6', '#17212E'),
     'dark': ('#86ADD6', '#B8D4EF', '#F1F5F9'),
+    'red-light': ('#B4232D', '#E77C83', '#17212E'),
+    'red-dark': ('#F16B6B', '#FF9C9C', '#F1F5F9'),
     'black': ('#000000', '#000000', '#000000'),
     'white': ('#FFFFFF', '#FFFFFF', '#FFFFFF'),
 }
@@ -63,11 +65,13 @@ fav.mkdir(exist_ok=True)
 fc = 'M6 2H10V3H11V4H12V5H13V14H10V10H6V14H3V5H4V4H5V3H6ZM6 5V7H10V5Z'
 def favicon_body(primary,accent):
     return f'<path fill="{primary}" fill-rule="evenodd" d="{fc}"/><path fill="{accent}" d="M6 8H10V10H6Z"/>'
-for theme in ['light','dark']:
+for theme in ['light','dark','red-light','red-dark']:
     a,b,_ = themes[theme]
     (fav / f'favicon-{theme}.svg').write_text(wrap(favicon_body(a,b),16,16,'Apex'),encoding='utf-8')
 adaptive = '<style>.a{fill:#4C75A3}.p{fill:#86ADD6}@media(prefers-color-scheme:dark){.a{fill:#86ADD6}.p{fill:#B8D4EF}}</style>'+f'<path class="a" fill-rule="evenodd" d="{fc}"/><path class="p" d="M6 8H10V10H6Z"/>'
 (fav/'favicon.svg').write_text(wrap(adaptive,16,16,'Apex'),encoding='utf-8')
+adaptive_red = '<style>.a{fill:#B4232D}.p{fill:#E77C83}@media(prefers-color-scheme:dark){.a{fill:#F16B6B}.p{fill:#FF9C9C}}</style>'+f'<path class="a" fill-rule="evenodd" d="{fc}"/><path class="p" d="M6 8H10V10H6Z"/>'
+(fav/'favicon-red.svg').write_text(wrap(adaptive_red,16,16,'Apex'),encoding='utf-8')
 
 preview = '<rect width="1400" height="1050" fill="#F5F7FA"/><rect y="525" width="1400" height="525" fill="#10151C"/>'
 for theme, top, fg, note in [('light',0,'#17212E','LIGHT BACKGROUND'),('dark',525,'#F1F5F9','DARK BACKGROUND')]:

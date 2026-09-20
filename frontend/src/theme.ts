@@ -1,6 +1,9 @@
 import { createTheme } from '@mui/material/styles'
 
 export const apexTheme = createTheme({
+  typography: {
+    fontFamily: 'Outfit, system-ui, sans-serif',
+  },
   colorSchemes: {
     light: {
       palette: {
