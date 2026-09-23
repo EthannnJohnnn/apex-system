@@ -1,18 +1,24 @@
 # Apex frontend
 
 React, TypeScript, Vite, and Material UI provide the local president interface.
-The current screen is a visual preview; login and student records are not active yet.
+The current screen checks whether the Spring Boot backend and PostgreSQL database are ready; login and member records are not active yet.
 
 ## Run locally
 
-From this folder:
+Start the backend first from `../backend`:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Then start the frontend from this folder:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the local address printed by Vite. The application is not hosted online.
+Open the local address printed by Vite. Vite forwards relative `/api` requests to the backend during development. The application is not hosted online.
 
 ## Check changes
 

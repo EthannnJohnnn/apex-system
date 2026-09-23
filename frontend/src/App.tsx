@@ -1,5 +1,6 @@
 import { Box, Button, Container, Stack, Typography } from '@mui/material'
 import { useColorScheme } from '@mui/material/styles'
+import { ConnectionStatus } from './components/ConnectionStatus'
 
 const modes = ['light', 'dark', 'system'] as const
 const plannedAreas = ['Members', 'Attendance', 'Points', 'Warnings']
@@ -75,13 +76,21 @@ function App() {
 
         <Box
           component="section"
-          aria-labelledby="planned-areas-title"
+          aria-labelledby="system-status-title"
           sx={{ p: { xs: 3, sm: 4 }, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}
         >
           <Typography variant="overline" color="primary" sx={{ fontWeight: 700, letterSpacing: '0.14em' }}>
-            Coming next
+            Live check
           </Typography>
-          <Typography id="planned-areas-title" component="h2" variant="h5" sx={{ mt: 0.5, fontWeight: 700 }}>
+          <Typography id="system-status-title" component="h2" variant="h5" sx={{ mt: 0.5, fontWeight: 700 }}>
+            System status
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2.5 }}>
+            React checks that the Apex backend and database are ready.
+          </Typography>
+          <ConnectionStatus />
+
+          <Typography component="h3" variant="h6" sx={{ mt: 4, fontWeight: 700 }}>
             President's tools
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -108,7 +117,7 @@ function App() {
       <Box component="footer" sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
         <Container maxWidth="lg" sx={{ py: 2.5 }}>
           <Typography variant="caption" color="text.secondary">
-            Apex interface preview — login and student records are not active yet.
+            Apex connection preview — login and member records are not active yet.
           </Typography>
         </Container>
       </Box>
