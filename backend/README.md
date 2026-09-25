@@ -2,6 +2,8 @@
 
 Spring Boot API for the local Apex system.
 
+For president account setup, login, and recovery, follow [Stage 8](../docs/stage-8.md).
+
 ## Requirements
 
 - Java 24

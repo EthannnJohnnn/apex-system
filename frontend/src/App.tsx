@@ -1,9 +1,8 @@
 import { Box, Button, Container, Stack, Typography } from '@mui/material'
 import { useColorScheme } from '@mui/material/styles'
-import { ConnectionStatus } from './components/ConnectionStatus'
+import { PresidentAccess } from './components/PresidentAccess'
 
 const modes = ['light', 'dark', 'system'] as const
-const plannedAreas = ['Members', 'Attendance', 'Points', 'Warnings']
 
 function App() {
   const { mode, systemMode, setMode } = useColorScheme()
@@ -76,48 +75,17 @@ function App() {
 
         <Box
           component="section"
-          aria-labelledby="system-status-title"
+          aria-label="President account"
           sx={{ p: { xs: 3, sm: 4 }, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}
         >
-          <Typography variant="overline" color="primary" sx={{ fontWeight: 700, letterSpacing: '0.14em' }}>
-            Live check
-          </Typography>
-          <Typography id="system-status-title" component="h2" variant="h5" sx={{ mt: 0.5, fontWeight: 700 }}>
-            System status
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2.5 }}>
-            React checks that the Apex backend and database are ready.
-          </Typography>
-          <ConnectionStatus />
-
-          <Typography component="h3" variant="h6" sx={{ mt: 4, fontWeight: 700 }}>
-            President's tools
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            These areas will appear as we build Apex.
-          </Typography>
-          <Box sx={{ mt: 3 }}>
-            {plannedAreas.map((area, index) => (
-              <Box
-                key={area}
-                sx={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 2, py: 2, borderTop: '1px solid', borderColor: 'divider' }}
-              >
-                <Typography variant="caption" color="primary" sx={{ fontWeight: 700 }}>
-                  {String(index + 1).padStart(2, '0')}
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {area}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
+          <PresidentAccess />
         </Box>
       </Container>
 
       <Box component="footer" sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
         <Container maxWidth="lg" sx={{ py: 2.5 }}>
           <Typography variant="caption" color="text.secondary">
-            Apex connection preview — login and member records are not active yet.
+            Apex · Local president workspace
           </Typography>
         </Container>
       </Box>
