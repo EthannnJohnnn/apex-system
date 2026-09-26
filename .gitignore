@@ -10,3 +10,10 @@ tmp/
 
 /output/
 /branding/*.zip
+
+# Local HTTPS private keys, encrypted secrets and device-specific configuration
+/.local/
+*.p12
+*.pfx
+*.jks
+*-key.pem
