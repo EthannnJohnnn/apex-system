@@ -1,7 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Alert, Box, Button, CircularProgress, Stack, TextField, Typography } from '@mui/material'
 import { ApiError, authRequest, type President } from '../api/auth'
 import { ConnectionStatus } from './ConnectionStatus'
+import { Members } from './Members'
 
 export function PresidentAccess() {
   const [president, setPresident] = useState<President | null>(null)
@@ -10,6 +11,11 @@ export function PresidentAccess() {
   const [message, setMessage] = useState('')
   const [notice, setNotice] = useState('')
   const [changing, setChanging] = useState(false)
+  const sessionExpired = useCallback(() => {
+    setPresident(null)
+    setChanging(false)
+    setNotice('Your session expired. Please sign in again.')
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -127,12 +133,12 @@ export function PresidentAccess() {
       </Stack>
     </Box>}
     {president ? <>
-      <Typography color="text.secondary">You are signed in. Member management is coming in Stage 9.</Typography>
       <Stack direction="row" spacing={1}>
         <Button disabled={busy} onClick={() => setChanging(!changing)}>{changing ? 'Cancel' : 'Change password'}</Button>
         <Button disabled={busy} onClick={logout}>Sign out</Button>
       </Stack>
       <ConnectionStatus />
+      <Members onSessionExpired={sessionExpired} />
     </> : <Typography variant="body2" color="text.secondary">
       Forgot your password? Use the account recovery command on the Apex laptop.
     </Typography>}

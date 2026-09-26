@@ -9,6 +9,10 @@ export class ApiError extends Error {
 export interface President { username: string; role: string }
 
 export async function authRequest(path: string, body?: URLSearchParams | object): Promise<Response> {
+  return apiRequest('/api/v1/auth/' + path, body === undefined ? 'GET' : 'POST', body)
+}
+
+export async function apiRequest(path: string, method = 'GET', body?: URLSearchParams | object): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' }
   if (body !== undefined) {
     const tokenResponse = await fetch('/api/v1/auth/csrf', { cache: 'no-store' })
@@ -18,8 +22,8 @@ export async function authRequest(path: string, body?: URLSearchParams | object)
     headers['Content-Type'] = body instanceof URLSearchParams
       ? 'application/x-www-form-urlencoded' : 'application/json'
   }
-  const response = await fetch('/api/v1/auth/' + path, {
-    method: body === undefined ? 'GET' : 'POST',
+  const response = await fetch(path, {
+    method,
     credentials: 'same-origin',
     cache: 'no-store',
     headers,

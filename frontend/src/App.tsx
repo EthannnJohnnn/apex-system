@@ -47,10 +47,10 @@ function App() {
         sx={{
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.35fr) minmax(280px, 0.65fr)' },
+          gridTemplateColumns: 'minmax(0, 1fr)',
           alignItems: 'center',
-          gap: { xs: 6, md: 10 },
-          py: { xs: 7, md: 10 },
+          gap: 3,
+          py: { xs: 3, md: 4 },
         }}
       >
         <Box>
@@ -61,14 +61,11 @@ function App() {
           <Typography
             component="h1"
             variant="h2"
-            sx={{ mt: 1.5, maxWidth: 620, fontSize: { xs: '2.7rem', sm: '3.5rem', md: '4.25rem' }, lineHeight: 1.08, fontWeight: 700, letterSpacing: '-0.035em' }}
+            sx={{ mt: 1.5, fontSize: { xs: '2rem', md: '2.75rem' }, lineHeight: 1.08, fontWeight: 700, letterSpacing: '-0.035em' }}
           >
             A clear view of every contribution.
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 3, maxWidth: 500, fontSize: '1.1rem', lineHeight: 1.6 }}>
-            Apex will bring member records, attendance, points, and warnings into one focused workspace for the organization president.
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 5, pt: 3, borderTop: '1px solid', borderColor: 'divider', maxWidth: 500 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
             Runs on one laptop. Members are records, not accounts.
           </Typography>
         </Box>

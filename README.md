@@ -11,3 +11,5 @@ The system runs on one laptop, with optional access from a phone on the same Wi-
 - `branding/apex` - Apex logo source and exported assets
 
 Development setup and backend run instructions are in [`backend/README.md`](backend/README.md).
+
+Member management setup, rules and learning checklist: [`docs/stage-9.md`](docs/stage-9.md).
