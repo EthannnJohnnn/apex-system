@@ -39,7 +39,12 @@ class PostgresMemberPersistenceTests {
              var statement = connection.createStatement()) {
             statement.execute("CREATE SCHEMA " + schema);
             try {
+                // Start with the previous Stage 9 schema, then verify the V4 upgrade.
+                org.flywaydb.core.Flyway.configure().dataSource(url, "apex_app", password)
+                    .defaultSchema(schema).target("3").load().migrate();
                 String id;
+                String closedTerm;
+                String activeTerm;
                 try (var first = start(schema)) {
                     first.getBean(PresidentAccounts.class).create("test_president", TEST_PASSWORD);
                     var browser = new Browser(first);
@@ -48,6 +53,19 @@ class PostgresMemberPersistenceTests {
                         "{\"memberCode\":\"PERSIST-001\",\"name\":\"Fictional Restart Member\",\"position\":\"Member\",\"category\":\"MEMBER\"}", false);
                     assertEquals(201, created.statusCode());
                     id = com.jayway.jsonpath.JsonPath.read(created.body(), "$.id");
+                    var settings = browser.send("/api/v1/settings", "PUT",
+                        "{\"organizationName\":\"Fictional Persistence Org\",\"meetingPresent\":4,\"meetingLate\":2,\"eventPresent\":5,\"eventLate\":3,\"version\":0}", false);
+                    assertEquals(200, settings.statusCode());
+                    var term = browser.send("/api/v1/terms", "POST", termDetails("Old term", 0, ""), false);
+                    assertEquals(201, term.statusCode());
+                    closedTerm = com.jayway.jsonpath.JsonPath.read(term.body(), "$.id");
+                    assertEquals(200, browser.send("/api/v1/terms/"+closedTerm+"/activate", "POST", "{\"version\":0}", false).statusCode());
+                    assertEquals(200, browser.send("/api/v1/terms/"+closedTerm+"/close", "POST", "{\"version\":1}", false).statusCode());
+                    assertEquals(200, browser.send("/api/v1/terms/"+closedTerm+"/corrections", "POST", termDetails("Old term corrected", 2, "Corrected typo"), false).statusCode());
+                    var next = browser.send("/api/v1/terms", "POST", termDetails("New term", 0, ""), false);
+                    assertEquals(201, next.statusCode());
+                    activeTerm = com.jayway.jsonpath.JsonPath.read(next.body(), "$.id");
+                    assertEquals(200, browser.send("/api/v1/terms/"+activeTerm+"/activate", "POST", "{\"version\":0}", false).statusCode());
                 }
                 // A new application context, connection pool and HTTP session must read the same row.
                 try (var restarted = start(schema)) {
@@ -59,11 +77,22 @@ class PostgresMemberPersistenceTests {
                     var history = browser.send("/api/v1/members/" + id + "/eligibility-history", "GET", null, false);
                     assertEquals(200, history.statusCode());
                     assertEquals("test_president", com.jayway.jsonpath.JsonPath.read(history.body(), "$[0].changedBy"));
+                    var settings = browser.send("/api/v1/settings", "GET", null, false);
+                    assertEquals("Fictional Persistence Org", com.jayway.jsonpath.JsonPath.read(settings.body(), "$.organizationName"));
+                    var terms = restarted.getBean(ph.edu.slsu.psim.apex.organization.OrganizationService.class);
+                    assertEquals("ACTIVE", terms.get(UUID.fromString(activeTerm)).status());
+                    assertEquals("CLOSED", terms.get(UUID.fromString(closedTerm)).status());
+                    assertEquals(4, terms.history(UUID.fromString(closedTerm)).size());
+                    assertEquals("Corrected typo", terms.history(UUID.fromString(closedTerm)).getFirst().reason());
                 }
             } finally {
                 statement.execute("DROP SCHEMA " + schema + " CASCADE");
             }
         }
+    }
+
+    private static String termDetails(String name, long version, String reason) {
+        return "{\"name\":\""+name+"\",\"startDate\":\"2026-08-01\",\"endDate\":\"2026-12-31\",\"version\":"+version+",\"reason\":\""+reason+"\"}";
     }
 
     static class Browser {

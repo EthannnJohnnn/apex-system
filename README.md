@@ -13,3 +13,5 @@ The system runs on one laptop. Phone access is out of scope for now. Only the pr
 Development setup and backend run instructions are in [`backend/README.md`](backend/README.md).
 
 Member management setup, rules and learning checklist: [`docs/stage-9.md`](docs/stage-9.md).
+
+Organization settings and academic terms: [`docs/stage-11.md`](docs/stage-11.md).
