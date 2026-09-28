@@ -52,9 +52,9 @@ all preview data disappears when the preview backend stops.
 
 ## Boundaries for the next stages
 
-There is no ledger or attendance module yet. No fake totals or attendance records are
-created by this stage. Stage 12 must attach each point transaction to its term, sum by
-that term, and show a new term at zero while preserving earlier results.
+Stage 12 now supplies the manual ledger and term totals (see `stage-12.md`). Each
+transaction belongs to its term; new terms start at zero and earlier results remain
+available. Attendance records and automatic scoring are still reserved for Stage 13.
 
 The `TermClosureCheck` interface is the attendance integration point: Stage 13 must
 provide a bean that checks for unfinished drafts in the selected term. Until that module

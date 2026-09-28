@@ -15,3 +15,5 @@ Development setup and backend run instructions are in [`backend/README.md`](back
 Member management setup, rules and learning checklist: [`docs/stage-9.md`](docs/stage-9.md).
 
 Organization settings and academic terms: [`docs/stage-11.md`](docs/stage-11.md).
+
+Point ledger, safe practice and corrections: [`docs/stage-12.md`](docs/stage-12.md).

@@ -45,6 +45,7 @@ class PostgresMemberPersistenceTests {
                 String id;
                 String closedTerm;
                 String activeTerm;
+                String pointId;
                 try (var first = start(schema)) {
                     first.getBean(PresidentAccounts.class).create("test_president", TEST_PASSWORD);
                     var browser = new Browser(first);
@@ -66,6 +67,18 @@ class PostgresMemberPersistenceTests {
                     assertEquals(201, next.statusCode());
                     activeTerm = com.jayway.jsonpath.JsonPath.read(next.body(), "$.id");
                     assertEquals(200, browser.send("/api/v1/terms/"+activeTerm+"/activate", "POST", "{\"version\":0}", false).statusCode());
+                    String pointBody = "{\"requestId\":\""+UUID.randomUUID()+"\",\"termId\":\""+activeTerm+"\",\"memberId\":\""+id+"\",\"amount\":5,\"reason\":\"Fictional contribution\"}";
+                    var award = browser.send("/api/v1/points", "POST", pointBody, false);
+                    assertEquals(200, award.statusCode());
+                    pointId = com.jayway.jsonpath.JsonPath.read(award.body(), "$[0].id");
+                    assertEquals(award.body(), browser.send("/api/v1/points", "POST", pointBody, false).body());
+                    var correction = browser.send("/api/v1/points/"+pointId+"/corrections", "POST",
+                        "{\"requestId\":\""+UUID.randomUUID()+"\",\"amount\":3,\"reason\":\"Corrected amount\"}", false);
+                    assertEquals(200, correction.statusCode());
+                    assertThrows(java.sql.SQLException.class, () -> statement.executeUpdate("UPDATE "+schema+".point_entry SET amount=99"));
+                    assertThrows(java.sql.SQLException.class, () -> statement.executeUpdate("DELETE FROM "+schema+".point_entry"));
+                    assertThrows(java.sql.SQLException.class, () -> statement.execute("TRUNCATE "+schema+".point_entry CASCADE"));
+                    assertThrows(java.sql.SQLException.class, () -> statement.executeUpdate("UPDATE "+schema+".point_request SET reason='Changed'"));
                 }
                 // A new application context, connection pool and HTTP session must read the same row.
                 try (var restarted = start(schema)) {
@@ -84,6 +97,13 @@ class PostgresMemberPersistenceTests {
                     assertEquals("CLOSED", terms.get(UUID.fromString(closedTerm)).status());
                     assertEquals(4, terms.history(UUID.fromString(closedTerm)).size());
                     assertEquals("Corrected typo", terms.history(UUID.fromString(closedTerm)).getFirst().reason());
+                    var ledger = browser.send("/api/v1/points?termId="+activeTerm, "GET", null, false);
+                    assertEquals(200,ledger.statusCode());
+                    assertEquals(3,(int)com.jayway.jsonpath.JsonPath.read(ledger.body(), "$.totals[0].total"));
+                    assertEquals(3,(int)com.jayway.jsonpath.JsonPath.read(ledger.body(), "$.entries.length()"));
+                    assertEquals(pointId,com.jayway.jsonpath.JsonPath.read(ledger.body(), "$.entries[2].id"));
+                    var prior = browser.send("/api/v1/points?termId="+closedTerm, "GET", null, false);
+                    assertEquals(0,(int)com.jayway.jsonpath.JsonPath.read(prior.body(), "$.totals[0].total"));
                 }
             } finally {
                 statement.execute("DROP SCHEMA " + schema + " CASCADE");

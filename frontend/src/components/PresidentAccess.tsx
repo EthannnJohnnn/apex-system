@@ -4,6 +4,7 @@ import { ApiError, authRequest, type President } from '../api/auth'
 import { ConnectionStatus } from './ConnectionStatus'
 import { Members } from './Members'
 import { Organization } from './Organization'
+import { Points } from './Points'
 
 export function PresidentAccess() {
   const [president, setPresident] = useState<President | null>(null)
@@ -141,6 +142,7 @@ export function PresidentAccess() {
       <ConnectionStatus />
       <Members onSessionExpired={sessionExpired} />
       <Organization onSessionExpired={sessionExpired} />
+      <Points onSessionExpired={sessionExpired} />
     </> : <Typography variant="body2" color="text.secondary">
       Forgot your password? Use the account recovery command on the Apex laptop.
     </Typography>}
