@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Alert, Box, Button, CircularProgress, Stack, TextField, Typography } from '@mui/material'
 import { ApiError, authRequest, type President } from '../api/auth'
-import { ConnectionStatus } from './ConnectionStatus'
-import { Members } from './Members'
-import { Organization } from './Organization'
-import { Points } from './Points'
+import { useNavigate } from 'react-router'
+import { Workspace } from './Workspace'
+import { ApexLogo, Appearance } from './Appearance'
 
 export function PresidentAccess() {
+  const navigate = useNavigate()
   const [president, setPresident] = useState<President | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -78,6 +78,7 @@ export function PresidentAccess() {
         }))
         const response = await authRequest('me')
         setPresident(await response.json())
+        navigate('/')
       }
       form.reset()
     } catch (error) {
@@ -109,7 +110,7 @@ export function PresidentAccess() {
 
   if (loading) return <Box role="status"><CircularProgress size={24} /> Checking your session…</Box>
 
-  return <Stack spacing={2.5}>
+  const account = <Stack spacing={2.5}>
     <Box>
       <Typography variant="overline" color="primary">President workspace</Typography>
       <Typography component="h2" variant="h5" sx={{ fontWeight: 700 }}>
@@ -139,12 +140,14 @@ export function PresidentAccess() {
         <Button disabled={busy} onClick={() => setChanging(!changing)}>{changing ? 'Cancel' : 'Change password'}</Button>
         <Button disabled={busy} onClick={logout}>Sign out</Button>
       </Stack>
-      <ConnectionStatus />
-      <Members onSessionExpired={sessionExpired} />
-      <Organization onSessionExpired={sessionExpired} />
-      <Points onSessionExpired={sessionExpired} />
     </> : <Typography variant="body2" color="text.secondary">
       Forgot your password? Use the account recovery command on the Apex laptop.
     </Typography>}
   </Stack>
+  if (president) return <Workspace username={president.username} busy={busy} logout={logout} onSessionExpired={sessionExpired} account={account} message={message} />
+  return <Box sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', p: 3, borderTop: '4px solid', borderColor: 'primary.main' }}>
+    <Box component="main" sx={{ width: '100%', maxWidth: 440, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 2, p: { xs: 3, sm: 4 } }}>
+      <Stack spacing={3}><Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}><ApexLogo /><Appearance /></Stack>{account}<Typography variant="caption" color="text.secondary">Apex · Laptop-only organization management</Typography></Stack>
+    </Box>
+  </Box>
 }

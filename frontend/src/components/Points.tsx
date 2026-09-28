@@ -89,7 +89,7 @@ export function Points({ onSessionExpired }: { onSessionExpired: () => void }) {
     <Typography variant="body2" color="text.secondary">Every total comes from its history. Awards add points; deductions subtract points. Corrections preserve the original entry.</Typography>
     {error && <Alert severity="error">{error}</Alert>}{notice && <Alert severity="success">{notice}</Alert>}
     {loading && <Typography role="status">Loading terms…</Typography>}
-    {!loading && terms.length === 0 && <Alert severity="info">Create and activate an academic term above, then click Reload ledger.</Alert>}
+    {!loading && terms.length === 0 && <Alert severity="info">Create and activate an academic term in Settings, then return to Point ledger.</Alert>}
     {terms.length > 0 && <TextField select label="Ledger term" value={selected} disabled={busy} onChange={e => { setSelected(e.target.value); setFilter(''); setError(''); setNotice('') }}>
       {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.name} ({t.status})</MenuItem>)}
     </TextField>}
