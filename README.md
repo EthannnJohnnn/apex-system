@@ -19,3 +19,5 @@ Organization settings and academic terms: [`docs/stage-11.md`](docs/stage-11.md)
 Point ledger, safe practice and corrections: [`docs/stage-12.md`](docs/stage-12.md).
 
 Sidebar and dashboard layout: [`docs/workspace-layout.md`](docs/workspace-layout.md).
+
+Meetings, events and attendance: [`docs/stage-13.md`](docs/stage-13.md).

@@ -115,6 +115,51 @@ class PostgresMemberPersistenceTests {
         return "{\"name\":\""+name+"\",\"startDate\":\"2026-08-01\",\"endDate\":\"2026-12-31\",\"version\":"+version+",\"reason\":\""+reason+"\"}";
     }
 
+    @Test void attendanceUpgradeDraftRestartFinalizationAndCorrectionOnPostgres() throws Exception {
+        String schema="apex_stage13_test_"+UUID.randomUUID().toString().replace("-", "");
+        try(var connection=DriverManager.getConnection(url,"apex_app",password); var statement=connection.createStatement()) {
+            statement.execute("CREATE SCHEMA "+schema);
+            try {
+                org.flywaydb.core.Flyway.configure().dataSource(url,"apex_app",password).defaultSchema(schema).target("6").load().migrate();
+                UUID activityId,termId,memberId;
+                var at=java.time.OffsetDateTime.now(java.time.ZoneOffset.ofHours(8)).minusHours(1);
+                try(var first=start(schema)) {
+                    first.getBean(PresidentAccounts.class).create("test_president",TEST_PASSWORD);
+                    var members=first.getBean(MemberService.class);
+                    memberId=members.create(new MemberService.Details("ATT-001","Fictional Attendance Member","Member",MemberService.Category.MEMBER,null,"",null,null),"test_president").id();
+                    first.getBean(org.springframework.jdbc.core.JdbcTemplate.class).update("UPDATE member_eligibility_history SET effective_at=? WHERE member_id=?",at.minusDays(1),memberId);
+                    var terms=first.getBean(ph.edu.slsu.psim.apex.organization.OrganizationService.class);
+                    termId=terms.create(new ph.edu.slsu.psim.apex.organization.OrganizationService.Details("Attendance term",at.toLocalDate().minusDays(2),at.toLocalDate().plusDays(2),null,null),"test_president").id();
+                    terms.transition(termId,new ph.edu.slsu.psim.apex.organization.OrganizationService.Change(0L),"test_president",true);
+                    var service=first.getBean(ph.edu.slsu.psim.apex.activity.ActivityService.class);
+                    var draft=service.create(new ph.edu.slsu.psim.apex.activity.ActivityService.Details(UUID.randomUUID(),termId,"Fictional meeting",ph.edu.slsu.psim.apex.activity.ActivityService.Kind.MEETING,at,"Hall","Restart verification",java.util.List.of(memberId),null),"test_president");
+                    activityId=draft.activity().id();
+                    service.saveDraft(activityId,new ph.edu.slsu.psim.apex.activity.ActivityService.Draft(UUID.randomUUID(),0L,java.util.List.of(new ph.edu.slsu.psim.apex.activity.ActivityService.Mark(memberId,ph.edu.slsu.psim.apex.activity.ActivityService.Status.PRESENT))),"test_president");
+                }
+                try(var second=start(schema)) {
+                    var browser=new Browser(second); browser.login();
+                    var saved=browser.send("/api/v1/activities/"+activityId,"GET",null,false);
+                    assertEquals(200,saved.statusCode()); assertEquals("PRESENT",com.jayway.jsonpath.JsonPath.read(saved.body(),"$.attendees[0].status"));
+                    String body="{\"requestId\":\""+UUID.randomUUID()+"\",\"version\":1}";
+                    assertEquals(200,browser.send("/api/v1/activities/"+activityId+"/finalize","POST",body,false).statusCode());
+                    assertEquals(200,browser.send("/api/v1/activities/"+activityId+"/finalize","POST",body,false).statusCode());
+                    assertThrows(java.sql.SQLException.class,() -> statement.executeUpdate("DELETE FROM "+schema+".attendance_history"));
+                    assertThrows(java.sql.SQLException.class,() -> statement.executeUpdate("UPDATE "+schema+".activity_action SET actor='Changed'"));
+                }
+                try(var third=start(schema)) {
+                    var service=third.getBean(ph.edu.slsu.psim.apex.activity.ActivityService.class);
+                    var persisted=service.view(activityId);
+                    assertEquals("FINALIZED",persisted.activity().status()); assertEquals(2,persisted.attendees().getFirst().points());
+                    service.correct(activityId,new ph.edu.slsu.psim.apex.activity.ActivityService.Correction(UUID.randomUUID(),2L,memberId,ph.edu.slsu.psim.apex.activity.ActivityService.Status.LATE,"Late arrival correction"),"test_president",false);
+                    var ledger=third.getBean(ph.edu.slsu.psim.apex.points.PointService.class).ledger(termId);
+                    assertEquals(1,ledger.totals().getFirst().total()); assertEquals(3,ledger.entries().size());
+                    assertTrue(ledger.entries().stream().allMatch(e -> activityId.equals(e.activityId())));
+                    assertEquals(1,service.summary(termId).recent().getFirst().late());
+                }
+            } finally { statement.execute("DROP SCHEMA "+schema+" CASCADE"); }
+        }
+    }
+
     static class Browser {
         final HttpClient client = HttpClient.newBuilder().cookieHandler(new CookieManager()).build();
         final String base;

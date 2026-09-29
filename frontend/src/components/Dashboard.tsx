@@ -3,11 +3,13 @@ import { Link } from 'react-router'
 import { Alert, Box, Button, Chip, Paper, Stack, Typography } from '@mui/material'
 import { ApiError, apiRequest } from '../api/auth'
 import { ConnectionStatus } from './ConnectionStatus'
+import type { Activity } from './Activities'
 
 interface Member { id: string; name: string; active: boolean; eligible: boolean }
 interface Term { id: string; name: string; status: string }
 interface Entry { id: string; memberId: string; amount: number; reason: string; recordedAt: string }
-interface Snapshot { members: Member[]; term?: Term; entries: Entry[]; netPoints: number }
+interface Trend { activity: Activity; present: number; late: number; excused: number; absent: number }
+interface Snapshot { members: Member[]; term?: Term; entries: Entry[]; netPoints: number; recent: Trend[]; upcoming: Activity[] }
 const panel = { p: 3, borderRadius: 2 }
 
 export function Dashboard({ onSessionExpired }: { onSessionExpired: () => void }) {
@@ -20,7 +22,8 @@ export function Dashboard({ onSessionExpired }: { onSessionExpired: () => void }
     ])
     const term = terms.find(t => t.status === 'ACTIVE')
     const ledger: { entries: Entry[] } = term ? await (await apiRequest('/api/v1/points?termId=' + term.id)).json() : { entries: [] }
-    return { members, term, entries: ledger.entries, netPoints: ledger.entries.reduce((sum, e) => sum + e.amount, 0) }
+    const attendance: { recent: Trend[]; upcoming: Activity[] } = term ? await (await apiRequest('/api/v1/activities/summary?termId=' + term.id)).json() : { recent: [], upcoming: [] }
+    return { members, term, entries: ledger.entries, netPoints: ledger.entries.reduce((sum, e) => sum + e.amount, 0), ...attendance }
   }, [])
   const report = useCallback((err: unknown) => {
     if (err instanceof ApiError && err.status === 401) onSessionExpired()
@@ -52,8 +55,12 @@ export function Dashboard({ onSessionExpired }: { onSessionExpired: () => void }
           {data.members.length === 0 ? <Typography>No members yet. Add your first member to see this chart.</Typography> : <Stack spacing={2.5} component="ul" sx={{ p: 0, listStyle: 'none' }}>{groups.map(group => <Box component="li" key={group.label}><Stack direction="row" sx={{ justifyContent: 'space-between', mb: .75 }}><Typography variant="body2">{group.label}</Typography><Typography variant="body2">{group.value}</Typography></Stack><Box aria-hidden="true" sx={{ height: 12, bgcolor: 'action.hover', borderRadius: 1, overflow: 'hidden' }}><Box sx={{ height: '100%', width: `${group.value / data.members.length * 100}%`, bgcolor: 'primary.main' }} /></Box></Box>)}</Stack>}
           <Button component={Link} to="/members" sx={{ mt: 2 }}>Manage members →</Button>
         </Paper>
-        <Paper variant="outlined" sx={panel}><Typography component="h2" variant="h6">Attendance trends</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Meetings and events · planned for Stage 13</Typography><Box sx={{ minHeight: 170, display: 'grid', placeItems: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 1, mt: 3, p: 3 }}><Typography color="text.secondary" sx={{ textAlign: 'center' }}>Attendance graphs will appear after the attendance feature is built. No sample results are shown.</Typography></Box></Paper>
+        <Paper variant="outlined" sx={panel}><Typography component="h2" variant="h6">Attendance trends</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Latest six finalized activities · active term · Present + Late / all expected attendees</Typography>
+          {data.recent.length === 0 ? <Typography color="text.secondary" sx={{ py: 4 }}>Finalize an activity to see real attendance results here.</Typography> : <Stack component="ul" spacing={2} sx={{ p: 0, listStyle: 'none' }}>{data.recent.map(row => { const total = row.present + row.late + row.excused + row.absent; return <Box component="li" key={row.activity.id}><Typography variant="body2" sx={{ fontWeight: 600 }}>{row.activity.title} · {row.present + row.late}/{total}</Typography><Typography variant="caption" color="text.secondary">Present {row.present} · Late {row.late} · Excused {row.excused} · Absent {row.absent}</Typography><Box aria-hidden="true" sx={{ height: 10, bgcolor: 'action.hover', borderRadius: 1, overflow: 'hidden', mt: .5 }}><Box sx={{ height: '100%', width: `${total ? (row.present + row.late) / total * 100 : 0}%`, bgcolor: 'primary.main' }} /></Box></Box> })}</Stack>}
+          <Button component={Link} to="/activities">Manage attendance →</Button>
+        </Paper>
       </Box>
+      <Paper variant="outlined" sx={panel}><Typography component="h2" variant="h6">Upcoming activities</Typography>{data.upcoming.length === 0 ? <Typography color="text.secondary" sx={{ mt: 1 }}>No upcoming drafts in the active term.</Typography> : data.upcoming.map(a => <Box key={a.id} sx={{ mt: 2 }}><Typography sx={{ fontWeight: 600 }}>{a.title}</Typography><Typography variant="body2" color="text.secondary">{new Date(a.scheduledAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} · Asia/Manila · {a.kind}</Typography></Box>)}</Paper>
       <Paper variant="outlined" sx={panel}><Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}><Typography component="h2" variant="h6">Recent point transactions</Typography><Button component={Link} to="/points">View ledger →</Button></Stack>
         {!data.term ? <Typography color="text.secondary" sx={{ mt: 2 }}>Activate a term in Settings to see its point activity.</Typography> : data.entries.length === 0 ? <Typography color="text.secondary" sx={{ mt: 2 }}>No point transactions in this term yet.</Typography> : data.entries.slice(0, 5).map(entry => <Stack key={entry.id} direction="row" spacing={2} sx={{ py: 2, borderBottom: 1, borderColor: 'divider', justifyContent: 'space-between' }}><Box sx={{ minWidth: 0 }}><Typography sx={{ fontWeight: 600 }}>{data.members.find(m => m.id === entry.memberId)?.name ?? 'Member'}</Typography><Typography variant="body2" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>{entry.reason}</Typography><Typography variant="caption" color="text.secondary">{new Date(entry.recordedAt).toLocaleString()}</Typography></Box><Typography sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{entry.amount > 0 ? '+' : ''}{entry.amount} pts</Typography></Stack>)}
       </Paper>

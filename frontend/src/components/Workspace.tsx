@@ -14,6 +14,7 @@ import { Dashboard } from './Dashboard'
 import { Members } from './Members'
 import { Organization } from './Organization'
 import { Points } from './Points'
+import { Activities } from './Activities'
 
 const pages = [
   { path: '/', label: 'Dashboard', icon: <DashboardOutlined /> },
@@ -65,7 +66,7 @@ export function Workspace({ username, busy, logout, onSessionExpired, account, m
             <Route path="/members" element={<Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}><Members onSessionExpired={onSessionExpired} /></Paper>} />
             <Route path="/points" element={<Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}><Points onSessionExpired={onSessionExpired} /></Paper>} />
             <Route path="/settings" element={<Stack spacing={3}><Paper variant="outlined" sx={{ p: 3 }}><Organization onSessionExpired={onSessionExpired} /></Paper><Paper variant="outlined" sx={{ p: 3 }}>{account}</Paper></Stack>} />
-            <Route path="/activities" element={<Paper variant="outlined" sx={{ p: 3 }}><Upcoming stage={13} description="Create meetings and events, save attendance drafts, and finalize points from one place." /></Paper>} />
+            <Route path="/activities" element={<Activities onSessionExpired={onSessionExpired} />} />
             <Route path="/warnings" element={<Paper variant="outlined" sx={{ p: 3 }}><Upcoming stage={14} description="Record warnings and track their resolution with an auditable history." /></Paper>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

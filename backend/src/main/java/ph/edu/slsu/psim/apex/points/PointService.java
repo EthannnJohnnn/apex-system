@@ -15,7 +15,7 @@ public class PointService {
     public record Command(UUID requestId, UUID termId, UUID memberId, Integer amount, String reason) {}
     public record Correction(UUID requestId, Integer amount, String reason) {}
     public record Entry(UUID id, long sequence, UUID requestId, UUID termId, UUID memberId, int amount,
-        String kind, UUID reversesId, UUID replacesId, String reason, String actor, OffsetDateTime recordedAt) {}
+        String kind, UUID reversesId, UUID replacesId, String reason, String actor, OffsetDateTime recordedAt, UUID activityId) {}
     public record Total(UUID memberId, String memberCode, String name, boolean active, boolean eligible, long total) {}
     public record Ledger(OrganizationService.Term term, List<Total> totals, List<Entry> entries) {}
     private record Request(UUID id, String operation, UUID term, UUID member, UUID source, int amount, String reason, String actor) {}
@@ -24,7 +24,7 @@ public class PointService {
     private static final RowMapper<Entry> ENTRY = (rs,row) -> new Entry(rs.getObject("id",UUID.class), rs.getLong("sequence_no"),
         rs.getObject("request_id",UUID.class), rs.getObject("term_id",UUID.class), rs.getObject("member_id",UUID.class),
         rs.getInt("amount"), rs.getString("kind"), rs.getObject("reverses_id",UUID.class), rs.getObject("replaces_id",UUID.class),
-        rs.getString("reason"), rs.getString("actor"), rs.getObject("recorded_at",OffsetDateTime.class));
+        rs.getString("reason"), rs.getString("actor"), rs.getObject("recorded_at",OffsetDateTime.class), rs.getObject("activity_id",UUID.class));
     public PointService(JdbcTemplate jdbc, OrganizationService terms) { this.jdbc=jdbc; this.terms=terms; }
 
     @Transactional(readOnly=true, isolation=org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
@@ -58,6 +58,7 @@ public class PointService {
         Entry source = jdbc.query("SELECT * FROM point_entry WHERE id=?", ENTRY, id).stream().findFirst()
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Point entry not found."));
         Request request = request(input.requestId(), closed ? "CLOSED_CORRECTION" : "CORRECTION", source.termId(),source.memberId(),id,input.amount(),input.reason(),actor);
+        if (source.activityId()!=null) throw conflict("Correct attendance in Activities so attendance and points stay consistent.");
         if (replay(request)) return response(request.id());
         var term = terms.get(source.termId());
         if (closed) {

@@ -4,7 +4,7 @@ import { ApiError, apiRequest } from '../api/auth'
 
 interface Term { id: string; name: string; status: 'DRAFT' | 'ACTIVE' | 'CLOSED' }
 interface Total { memberId: string; memberCode: string; name: string; active: boolean; eligible: boolean; total: number }
-interface Entry { id: string; sequence: number; memberId: string; amount: number; kind: string; reversesId: string | null; replacesId: string | null; reason: string; actor: string; recordedAt: string }
+interface Entry { id: string; sequence: number; memberId: string; amount: number; kind: string; reversesId: string | null; replacesId: string | null; reason: string; actor: string; recordedAt: string; activityId: string | null }
 interface Ledger { term: Term; totals: Total[]; entries: Entry[] }
 interface Action { requestId: string; termId: string; memberId: string; amount: number; reason: string }
 interface Editor { requestId: string; member: Total; source?: Entry }
@@ -112,7 +112,8 @@ export function Points({ onSessionExpired }: { onSessionExpired: () => void }) {
         <Typography>{entry.reason}</Typography>
         <Typography variant="body2" color="text.secondary">{entry.actor} · {new Date(entry.recordedAt).toLocaleString()}</Typography>
         {(entry.reversesId || entry.replacesId) && <Typography variant="body2">{entry.reversesId ? 'Reverses' : 'Replaces'} entry #{current.entries.find(e => e.id === (entry.reversesId ?? entry.replacesId))?.sequence}</Typography>}
-        {entry.kind !== 'REVERSAL' && !reversed.has(entry.id) && current.term.status !== 'DRAFT' && <Button disabled={busy} onClick={() => open(members.get(entry.memberId)!,entry)}>{current.term.status === 'CLOSED' ? 'Correct closed-term entry' : 'Correct entry'}</Button>}
+        {entry.activityId && <Typography variant="body2">Attendance-linked entry. Correct its status on the Activities & attendance page.</Typography>}
+        {!entry.activityId && entry.kind !== 'REVERSAL' && !reversed.has(entry.id) && current.term.status !== 'DRAFT' && <Button disabled={busy} onClick={() => open(members.get(entry.memberId)!,entry)}>{current.term.status === 'CLOSED' ? 'Correct closed-term entry' : 'Correct entry'}</Button>}
       </Stack>)}
     </>}
     <Dialog open={!!editor} onClose={() => { if (!busy && !pending) setEditor(null) }} fullWidth maxWidth="sm">
