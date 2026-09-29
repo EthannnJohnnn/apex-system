@@ -160,6 +160,8 @@ public class ActivityService {
         if (input.status()==null) throw bad("Choose a status.");
         var member=attendees(id).stream().filter(m -> m.memberId().equals(input.memberId())).findFirst().orElseThrow(() -> bad("Member is not an expected attendee."));
         if (member.status()==input.status()) throw bad("Choose a different attendance status.");
+          if (jdbc.queryForObject("SELECT COUNT(*) FROM warning_record WHERE activity_id=? AND member_id=? AND status<>'CANCELLED'",Integer.class,id,input.memberId())>0)
+              throw conflict("Cancel the linked role no-show record in Warnings before correcting this attendance.");
         int amount=score(a,input.status(),Boolean.TRUE.equals(member.eligibleSnapshot()));
         UUID entry=ledger(a,member,amount,reason,actor);
         jdbc.update("UPDATE attendance SET status=?,points=?,entry_id=? WHERE activity_id=? AND member_id=?",input.status().name(),amount,entry,id,member.memberId());

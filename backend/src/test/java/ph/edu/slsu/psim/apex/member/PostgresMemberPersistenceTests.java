@@ -160,6 +160,52 @@ class PostgresMemberPersistenceTests {
         }
     }
 
+    @Test void warningUpgradeRestartCancellationAndImmutableHistoryOnPostgres() throws Exception {
+        String schema="apex_stage14_test_"+UUID.randomUUID().toString().replace("-", "");
+        try(var connection=DriverManager.getConnection(url,"apex_app",password); var statement=connection.createStatement()) {
+            statement.execute("CREATE SCHEMA "+schema);
+            try {
+                org.flywaydb.core.Flyway.configure().dataSource(url,"apex_app",password).defaultSchema(schema).target("8").load().migrate();
+                UUID warningId,termId;
+                String cancelBody="{\"requestId\":\""+UUID.randomUUID()+"\",\"version\":0,\"reason\":\"Fictional cancellation\"}";
+                try(var first=start(schema)) {
+                    first.getBean(PresidentAccounts.class).create("test_president",TEST_PASSWORD);
+                    var member=first.getBean(MemberService.class).create(new MemberService.Details("WARN-1","Fictional Warning Member","Member",MemberService.Category.MEMBER,null,"",null,null),"test_president");
+                    var terms=first.getBean(ph.edu.slsu.psim.apex.organization.OrganizationService.class);
+                    var today=java.time.LocalDate.now();
+                    termId=terms.create(new ph.edu.slsu.psim.apex.organization.OrganizationService.Details("Warning term",today.minusDays(1),today.plusDays(1),null,null),"test_president").id();
+                    terms.transition(termId,new ph.edu.slsu.psim.apex.organization.OrganizationService.Change(0L),"test_president",true);
+                    warningId=UUID.randomUUID();
+                    var browser=new Browser(first); browser.login();
+                    String body="{\"requestId\":\""+warningId+"\",\"termId\":\""+termId+"\",\"memberId\":\""+member.id()+"\",\"incident\":\"RESTART-1\",\"severity\":\"MAJOR\",\"deduction\":3,\"reason\":\"Fictional test incident\"}";
+                    assertEquals(200,browser.send("/api/v1/warnings","POST",body,false).statusCode());
+                    assertEquals(200,browser.send("/api/v1/warnings","POST",body,false).statusCode());
+                    assertEquals(-3,first.getBean(ph.edu.slsu.psim.apex.points.PointService.class).ledger(termId).totals().getFirst().total());
+                }
+                try(var second=start(schema)) {
+                    var browser=new Browser(second); browser.login();
+                    var saved=browser.send("/api/v1/warnings/"+warningId,"GET",null,false);
+                    assertEquals("MAJOR",com.jayway.jsonpath.JsonPath.read(saved.body(),"$.warning.severity"));
+                    assertEquals(200,browser.send("/api/v1/warnings/"+warningId+"/cancel","POST",cancelBody,false).statusCode());
+                    for(String table:new String[]{"warning_history","warning_action"}) {
+                        assertThrows(java.sql.SQLException.class,() -> statement.executeUpdate("DELETE FROM "+schema+"."+table));
+                        assertThrows(java.sql.SQLException.class,() -> statement.executeUpdate("UPDATE "+schema+"."+table+" SET actor='Changed'"));
+                        assertThrows(java.sql.SQLException.class,() -> statement.execute("TRUNCATE "+schema+"."+table));
+                    }
+                }
+                try(var third=start(schema)) {
+                    var browser=new Browser(third); browser.login();
+                    assertEquals(200,browser.send("/api/v1/warnings/"+warningId+"/cancel","POST",cancelBody,false).statusCode());
+                    var saved=third.getBean(ph.edu.slsu.psim.apex.warning.WarningService.class).view(warningId);
+                    assertEquals("CANCELLED",saved.warning().status()); assertEquals(2,saved.history().size());
+                    var ledger=third.getBean(ph.edu.slsu.psim.apex.points.PointService.class).ledger(termId);
+                    assertEquals(0,ledger.totals().getFirst().total()); assertEquals(2,ledger.entries().size());
+                    assertTrue(ledger.entries().stream().allMatch(e -> warningId.equals(e.warningId())));
+                }
+            } finally { statement.execute("DROP SCHEMA "+schema+" CASCADE"); }
+        }
+    }
+
     static class Browser {
         final HttpClient client = HttpClient.newBuilder().cookieHandler(new CookieManager()).build();
         final String base;

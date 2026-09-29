@@ -21,3 +21,5 @@ Point ledger, safe practice and corrections: [`docs/stage-12.md`](docs/stage-12.
 Sidebar and dashboard layout: [`docs/workspace-layout.md`](docs/workspace-layout.md).
 
 Meetings, events and attendance: [`docs/stage-13.md`](docs/stage-13.md).
+
+Warnings, incident deductions and cancellation history: [`docs/stage-14.md`](docs/stage-14.md).

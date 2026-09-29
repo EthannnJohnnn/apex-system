@@ -74,4 +74,4 @@ Sign in as `preview_president` with `fictional-preview-password`. Four fictional
 
 Automated tests cover defaults/snapshots, bulk draft persistence, missing statuses, concurrent/repeated finalization, historical eligibility, zero outcomes, correction chains, active/closed-term rules, roster validation, stale edits, transaction rollback, authentication and CSRF. The opt-in PostgreSQL test uses a fresh random schema, upgrades from Stage 12, restarts the application around draft/finalization, verifies linked corrections and append-only triggers, then removes only that test schema.
 
-Stage 14 warnings and role-no-show deductions are not included here. Full leaderboard/dashboard work remains Stage 15.
+Warnings and role-no-show deductions are documented separately in [Stage 14](stage-14.md). Full leaderboard/dashboard work remains Stage 15.

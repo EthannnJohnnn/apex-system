@@ -15,6 +15,7 @@ import { Members } from './Members'
 import { Organization } from './Organization'
 import { Points } from './Points'
 import { Activities } from './Activities'
+import { Warnings } from './Warnings'
 
 const pages = [
   { path: '/', label: 'Dashboard', icon: <DashboardOutlined /> },
@@ -24,10 +25,6 @@ const pages = [
   { path: '/warnings', label: 'Warnings', icon: <FlagOutlined /> },
   { path: '/settings', label: 'Settings', icon: <SettingsOutlined /> },
 ]
-
-function Upcoming({ stage, description }: { stage: number; description: string }) {
-  return <Stack spacing={2}><Chip label={`Planned · Stage ${stage}`} sx={{ alignSelf: 'flex-start' }} /><Typography variant="h5" component="h2">This workspace is coming next</Typography><Typography color="text.secondary">{description}</Typography><Alert severity="info">No records are being collected here yet. Your existing members and points are unchanged.</Alert></Stack>
-}
 
 export function Workspace({ username, busy, logout, onSessionExpired, account, message }: {
   username: string; busy: boolean; logout: () => void; onSessionExpired: () => void; account: ReactNode; message: string
@@ -67,7 +64,7 @@ export function Workspace({ username, busy, logout, onSessionExpired, account, m
             <Route path="/points" element={<Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}><Points onSessionExpired={onSessionExpired} /></Paper>} />
             <Route path="/settings" element={<Stack spacing={3}><Paper variant="outlined" sx={{ p: 3 }}><Organization onSessionExpired={onSessionExpired} /></Paper><Paper variant="outlined" sx={{ p: 3 }}>{account}</Paper></Stack>} />
             <Route path="/activities" element={<Activities onSessionExpired={onSessionExpired} />} />
-            <Route path="/warnings" element={<Paper variant="outlined" sx={{ p: 3 }}><Upcoming stage={14} description="Record warnings and track their resolution with an auditable history." /></Paper>} />
+            <Route path="/warnings" element={<Warnings onSessionExpired={onSessionExpired} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <Typography component="footer" variant="caption" color="text.secondary">Apex · Local president workspace · Members are records, not accounts.</Typography>
