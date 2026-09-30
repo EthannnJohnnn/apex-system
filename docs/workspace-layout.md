@@ -1,10 +1,10 @@
 # Management workspace layout
 
-This UI step established the layout before Stage 13. Attendance is now implemented; see [Stage 13](stage-13.md). The full Stage 15 dashboard/leaderboard remains later work.
+This UI step established the layout before Stage 13. Attendance is documented in [Stage 13](stage-13.md); term rankings and the summary dashboard are documented in [Stage 15](stage-15.md).
 
 - Login opens Dashboard; the sidebar separates Members, Point ledger, Settings, and future feature pages.
-- Dashboard reads existing member, term and ledger APIs. Counts, the membership bar chart and recent transactions use database records, not sample data.
-- Net points sum every ledger entry in the active term, including reversals and deductions. This is not an eligible-member leaderboard.
+- Dashboard reads its dedicated summary API. Counts, the membership bar chart and recent transactions use database records, not sample data. The Leaderboard sidebar page provides term selection and top-ten/full-list views.
+- Net points sum every ledger entry in the selected term, including reversals and deductions. The separate leaderboard ranks only eligible members.
 - Activities provides the attendance workflow. Dashboard attendance trends and upcoming activities use actual records. Warnings now provides Stage 14 incidents, optional deductions and resolution/cancellation history; see [Stage 14](stage-14.md).
 - Organization/term controls and password changes are in Settings. Sign out and Light/Dark/System controls are available in the header.
 - Narrow laptop windows use a navigation drawer. This does not enable phone/network access.

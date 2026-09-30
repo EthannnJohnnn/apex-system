@@ -201,6 +201,16 @@ class PostgresMemberPersistenceTests {
                     var ledger=third.getBean(ph.edu.slsu.psim.apex.points.PointService.class).ledger(termId);
                     assertEquals(0,ledger.totals().getFirst().total()); assertEquals(2,ledger.entries().size());
                     assertTrue(ledger.entries().stream().allMatch(e -> warningId.equals(e.warningId())));
+                    var reports=third.getBean(ph.edu.slsu.psim.apex.report.ReportService.class);
+                    assertEquals(0,reports.leaderboard(termId,"all").members().getFirst().total());
+                    assertEquals(0,reports.dashboard(termId).counts().netPoints());
+                    var termService=third.getBean(ph.edu.slsu.psim.apex.organization.OrganizationService.class);
+                    termService.transition(termId,new ph.edu.slsu.psim.apex.organization.OrganizationService.Change(1L),"test_president",false);
+                    var ranked=reports.leaderboard(termId,"top10");
+                    assertEquals("CLOSED",ranked.term().status()); assertEquals(1,ranked.members().size()); assertEquals(1,ranked.members().getFirst().rank());
+                    assertEquals(200,browser.send("/api/v1/leaderboard?termId="+termId,"GET",null,false).statusCode());
+                    var dashboard=browser.send("/api/v1/dashboard?termId="+termId,"GET",null,false);
+                    assertEquals(200,dashboard.statusCode()); assertFalse(dashboard.body().contains("Fictional test incident"));
                 }
             } finally { statement.execute("DROP SCHEMA "+schema+" CASCADE"); }
         }

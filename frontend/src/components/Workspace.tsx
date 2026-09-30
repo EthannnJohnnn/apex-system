@@ -16,12 +16,15 @@ import { Organization } from './Organization'
 import { Points } from './Points'
 import { Activities } from './Activities'
 import { Warnings } from './Warnings'
+import { Leaderboard } from './Leaderboard'
+import LeaderboardOutlined from '@mui/icons-material/LeaderboardOutlined'
 
 const pages = [
   { path: '/', label: 'Dashboard', icon: <DashboardOutlined /> },
   { path: '/members', label: 'Members', icon: <PeopleOutline /> },
   { path: '/activities', label: 'Activities & attendance', icon: <EventOutlined /> },
   { path: '/points', label: 'Point ledger', icon: <ReceiptLongOutlined /> },
+  { path: '/leaderboard', label: 'Leaderboard', icon: <LeaderboardOutlined /> },
   { path: '/warnings', label: 'Warnings', icon: <FlagOutlined /> },
   { path: '/settings', label: 'Settings', icon: <SettingsOutlined /> },
 ]
@@ -65,6 +68,7 @@ export function Workspace({ username, busy, logout, onSessionExpired, account, m
             <Route path="/settings" element={<Stack spacing={3}><Paper variant="outlined" sx={{ p: 3 }}><Organization onSessionExpired={onSessionExpired} /></Paper><Paper variant="outlined" sx={{ p: 3 }}>{account}</Paper></Stack>} />
             <Route path="/activities" element={<Activities onSessionExpired={onSessionExpired} />} />
             <Route path="/warnings" element={<Warnings onSessionExpired={onSessionExpired} />} />
+            <Route path="/leaderboard" element={<Leaderboard onSessionExpired={onSessionExpired} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <Typography component="footer" variant="caption" color="text.secondary">Apex · Local president workspace · Members are records, not accounts.</Typography>

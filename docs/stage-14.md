@@ -69,4 +69,4 @@ Automated coverage includes warnings without deductions, resolve-then-cancel his
 
 Frontend checks: `npm run build` and `npm run lint`. Backend checks: `./mvnw.cmd test`; the isolated PostgreSQL integration checks additionally require the opt-in `APEX_PG_TEST_PASSWORD` environment variable. Keep passwords out of committed files. Browser checks use the fictional preview to exercise create, resolve, cancel, ledger reversal and the assigned-role form.
 
-Full leaderboard/dashboard work remains Stage 15.
+Term rankings and dashboard summaries are documented in [Stage 15](stage-15.md).
