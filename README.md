@@ -25,3 +25,5 @@ Meetings, events and attendance: [`docs/stage-13.md`](docs/stage-13.md).
 Warnings, incident deductions and cancellation history: [`docs/stage-14.md`](docs/stage-14.md).
 
 Term leaderboards and dashboard summaries: [`docs/stage-15.md`](docs/stage-15.md).
+
+Complete-system tests and laptop-only verification: [`docs/stage-16.md`](docs/stage-16.md).

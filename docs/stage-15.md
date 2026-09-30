@@ -53,4 +53,4 @@ For safe fictional practice, stop the normal backend and use the Stage 14 previe
 
 Automated checks: `./mvnw.cmd test` in backend, `npm run build` and `npm run lint` in frontend. The isolated PostgreSQL checks additionally require `APEX_PG_TEST_PASSWORD`; never commit passwords. Tests use isolated test databases/schemas, not organization records.
 
-Next: Stage 16 tests the complete end-to-end system.
+Next: [Stage 16](stage-16.md) tests the complete end-to-end system.
