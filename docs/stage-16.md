@@ -67,4 +67,4 @@ npm run lint
 
 `npm test` needs the project's Node 24 runtime (native TypeScript loading). Normal development still uses the backend and frontend terminals described in [Stage 15](stage-15.md).
 
-Next: **Stage 17 — backups and recovery**. Backups/restore and client packaging are not claimed complete by Stage 16.
+Next: [Stage 17 — backups and recovery](stage-17.md). Backups/restore and client packaging are not claimed complete by Stage 16.

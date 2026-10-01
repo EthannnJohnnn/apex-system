@@ -9,6 +9,12 @@ tmp/
 *.log
 
 /output/
+*.dump
+*.dump.json
+*.dump.partial
+*.dump.json.partial
+*.dump.*.partial
+*.dump.*.partial.json
 /branding/*.zip
 
 # Local HTTPS private keys, encrypted secrets and device-specific configuration

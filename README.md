@@ -27,3 +27,5 @@ Warnings, incident deductions and cancellation history: [`docs/stage-14.md`](doc
 Term leaderboards and dashboard summaries: [`docs/stage-15.md`](docs/stage-15.md).
 
 Complete-system tests and laptop-only verification: [`docs/stage-16.md`](docs/stage-16.md).
+
+Database backups, external copies and safe recovery: [`docs/stage-17.md`](docs/stage-17.md).
