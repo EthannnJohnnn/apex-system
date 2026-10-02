@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Alert, Box, Button, CircularProgress, Stack, Typography } from '@mui/material'
+import { Alert, Button, CircularProgress, Stack, Tooltip, Typography } from '@mui/material'
+import CheckCircleOutline from '@mui/icons-material/CheckCircleOutlined'
 import { getHealth, type HealthResponse } from '../api/health'
 
 type ConnectionState =
@@ -61,13 +62,10 @@ export function ConnectionStatus() {
   const { health } = connection
 
   return (
-    <Alert severity="success" sx={{ alignItems: 'center' }}>
-      <Typography variant="body2" sx={{ fontWeight: 700 }}>{health.application} connected</Typography>
-      <Box component="span" sx={{ display: 'block' }}>
-        <Typography component="span" variant="caption">
-          Application {health.status} · Database {health.database} · Schema v{health.schemaVersion}
-        </Typography>
-      </Box>
-    </Alert>
+    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+      <CheckCircleOutline color="success" sx={{ fontSize: 18 }} />
+      <Typography variant="caption">{health.application} connected at last check</Typography>
+      <Tooltip title={`Application ${health.status} · Database ${health.database} · Schema v${health.schemaVersion}`}><Button size="small" onClick={retry} aria-label="Recheck application and database connection">Recheck connection</Button></Tooltip>
+    </Stack>
   )
 }

@@ -1,6 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router'
-import { Alert, Box, Button, Chip, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, Chip, Dialog, DialogContent, DialogTitle, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Stack, Typography } from '@mui/material'
+import AccountCircleOutlined from '@mui/icons-material/AccountCircleOutlined'
+import CloseOutlined from '@mui/icons-material/CloseOutlined'
+import { ConnectionStatus } from './ConnectionStatus'
 import DashboardOutlined from '@mui/icons-material/DashboardOutlined'
 import PeopleOutline from '@mui/icons-material/PeopleOutlineOutlined'
 import EventOutlined from '@mui/icons-material/EventOutlined'
@@ -33,6 +36,8 @@ export function Workspace({ username, busy, logout, onSessionExpired, account, m
   username: string; busy: boolean; logout: () => void; onSessionExpired: () => void; account: ReactNode; message: string
 }) {
   const [open, setOpen] = useState(false)
+  const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null)
+  const [accountOpen, setAccountOpen] = useState(false)
   const location = useLocation()
   const title = pages.find(p => p.path === location.pathname)?.label ?? 'Dashboard'
   const sidebar = <Stack sx={{ height: '100%' }}>
@@ -54,7 +59,7 @@ export function Workspace({ username, busy, logout, onSessionExpired, account, m
       <Box component="header" sx={{ px: { xs: 2, lg: 4 }, py: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}><IconButton aria-label="Open navigation" onClick={() => setOpen(true)} sx={{ display: { md: 'none' } }}><MenuOutlined /></IconButton><Typography variant="body2" color="text.secondary">Apex / {title}</Typography></Stack>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}><Appearance /><Button startIcon={<LogoutOutlined />} disabled={busy} onClick={logout}>Sign out</Button></Stack>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}><Appearance /><Button id="account-button" startIcon={<AccountCircleOutlined />} aria-haspopup="menu" aria-controls={accountAnchor ? 'account-menu' : undefined} aria-expanded={!!accountAnchor} onClick={e => setAccountAnchor(e.currentTarget)}>Account</Button></Stack>
         </Stack>
       </Box>
       <Box component="main" id="main-content" tabIndex={-1} sx={{ p: { xs: 2, lg: 4 }, maxWidth: 1500, mx: 'auto' }}>
@@ -65,15 +70,24 @@ export function Workspace({ username, busy, logout, onSessionExpired, account, m
             <Route path="/" element={<Dashboard onSessionExpired={onSessionExpired} />} />
             <Route path="/members" element={<Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}><Members onSessionExpired={onSessionExpired} /></Paper>} />
             <Route path="/points" element={<Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}><Points onSessionExpired={onSessionExpired} /></Paper>} />
-            <Route path="/settings" element={<Stack spacing={3}><Paper variant="outlined" sx={{ p: 3 }}><Organization onSessionExpired={onSessionExpired} /></Paper><Paper variant="outlined" sx={{ p: 3 }}>{account}</Paper></Stack>} />
+            <Route path="/settings" element={<Paper variant="outlined" sx={{ p: 3 }}><Organization onSessionExpired={onSessionExpired} /></Paper>} />
             <Route path="/activities" element={<Activities onSessionExpired={onSessionExpired} />} />
             <Route path="/warnings" element={<Warnings onSessionExpired={onSessionExpired} />} />
             <Route path="/leaderboard" element={<Leaderboard onSessionExpired={onSessionExpired} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          <Typography component="footer" variant="caption" color="text.secondary">Apex · Local president workspace · Members are records, not accounts.</Typography>
+          <Stack component="footer" spacing={1} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}><ConnectionStatus /><Typography variant="caption" color="text.secondary">Apex · Local president workspace · Members are records, not accounts.</Typography></Stack>
         </Stack>
       </Box>
     </Box>
+    <Menu id="account-menu" anchorEl={accountAnchor} open={!!accountAnchor} onClose={() => setAccountAnchor(null)} slotProps={{ list: { 'aria-labelledby': 'account-button' } }}>
+      <MenuItem disabled>Signed in as {username}</MenuItem>
+      <MenuItem onClick={() => { setAccountAnchor(null); setAccountOpen(true) }}>Account & password</MenuItem>
+      <MenuItem disabled={busy} onClick={() => { setAccountAnchor(null); logout() }}><ListItemIcon><LogoutOutlined fontSize="small" /></ListItemIcon>Sign out</MenuItem>
+    </Menu>
+    <Dialog open={accountOpen} onClose={() => { if (!busy) setAccountOpen(false) }} fullWidth maxWidth="sm" aria-labelledby="account-title">
+      <DialogTitle id="account-title">Your account<IconButton aria-label="Close account" disabled={busy} onClick={() => setAccountOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseOutlined /></IconButton></DialogTitle>
+      <DialogContent>{account}</DialogContent>
+    </Dialog>
   </Box>
 }

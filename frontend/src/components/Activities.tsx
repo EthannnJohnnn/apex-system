@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Alert, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material'
 import { ApiError, apiRequest } from '../api/auth'
+import { useSearchParams } from 'react-router'
 
 type Status = 'PRESENT' | 'LATE' | 'EXCUSED' | 'ABSENT'
 const statuses: Status[] = ['PRESENT', 'LATE', 'EXCUSED', 'ABSENT']
@@ -16,6 +17,9 @@ const formatTime = (value: string) => new Date(value).toLocaleString('en-PH', { 
 const localInput = (value: string) => new Date(new Date(value).getTime() + 8 * 3600000).toISOString().slice(0, 16)
 
 export function Activities({ onSessionExpired }: { onSessionExpired: () => void }) {
+  const [searchParams] = useSearchParams()
+  // Read the entry link once; later term/activity selections stay under user control.
+  const [entryLink] = useState(() => ({ termId: searchParams.get('termId'), activityId: searchParams.get('activityId') }))
   const [terms, setTerms] = useState<Term[]>([])
   const [members, setMembers] = useState<Member[]>([])
   const [termId, setTermId] = useState('')
@@ -41,11 +45,18 @@ export function Activities({ onSessionExpired }: { onSessionExpired: () => void 
   }
   useEffect(() => {
     let live = true
-    Promise.all([apiRequest('/api/v1/terms').then(r => r.json()), apiRequest('/api/v1/members').then(r => r.json())]).then(([t, m]: [Term[], Member[]]) => {
-      if (live) { setTerms(t); setMembers(m); setTermId(t.find(item => item.status === 'ACTIVE')?.id ?? t[0]?.id ?? ''); setLoading(false) }
+    Promise.all([apiRequest('/api/v1/terms').then(r => r.json()), apiRequest('/api/v1/members').then(r => r.json()), entryLink.activityId ? apiRequest('/api/v1/activities/' + encodeURIComponent(entryLink.activityId)).then(r => r.json()) : Promise.resolve(null)]).then(([t, m, linked]: [Term[], Member[], View | null]) => {
+      if (live) {
+        setTerms(t); setMembers(m)
+        const requestedTerm = linked?.activity.termId ?? entryLink.termId
+        setTermId(t.find(item => item.id === requestedTerm)?.id ?? t.find(item => item.status === 'ACTIVE')?.id ?? t[0]?.id ?? '')
+        if (linked) show(linked)
+        if (requestedTerm && !t.some(item => item.id === requestedTerm)) setError('The linked term is unavailable. Choose a term below.')
+        setLoading(false)
+      }
     }).catch((err: unknown) => { if (live) { setError(report(err)); setLoading(false) } })
     return () => { live = false }
-  }, [report])
+  }, [report, entryLink])
   useEffect(() => {
     if (!termId) return
     let live = true
@@ -82,7 +93,7 @@ export function Activities({ onSessionExpired }: { onSessionExpired: () => void 
   }
   const activity = view?.activity
   const dirty = !!view && view.attendees.some(m => (marks[m.memberId] ?? '') !== (m.status ?? ''))
-  const locked = busy || !!pending
+  const locked = busy || loading || !!pending
   const canDraft = activity?.status === 'DRAFT' && view?.termStatus === 'ACTIVE'
   function openDialog(type: DialogState['type'], member?: Attendee) {
     setError(''); setNotice(''); setDialog({ type, member })

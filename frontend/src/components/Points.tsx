@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { ApiError, apiRequest } from '../api/auth'
+import { useSearchParams } from 'react-router'
 
 interface Term { id: string; name: string; status: 'DRAFT' | 'ACTIVE' | 'CLOSED' }
 interface Total { memberId: string; memberCode: string; name: string; active: boolean; eligible: boolean; total: number }
@@ -10,6 +11,8 @@ interface Action { requestId: string; termId: string; memberId: string; amount: 
 interface Editor { requestId: string; member: Total; source?: Entry }
 
 export function Points({ onSessionExpired }: { onSessionExpired: () => void }) {
+  const [searchParams] = useSearchParams()
+  const [entryTerm] = useState(() => searchParams.get('termId'))
   const [terms, setTerms] = useState<Term[]>([])
   const [selected, setSelected] = useState('')
   const [ledger, setLedger] = useState<Ledger | null>(null)
@@ -32,10 +35,13 @@ export function Points({ onSessionExpired }: { onSessionExpired: () => void }) {
   useEffect(() => {
     let live = true
     apiRequest('/api/v1/terms').then(r => r.json()).then((data: Term[]) => {
-      if (live) { setTerms(data); setSelected(data.find(t => t.status === 'ACTIVE')?.id ?? data[0]?.id ?? ''); setLoading(false) }
+      if (live) {
+        setTerms(data); setSelected(data.find(t => t.id === entryTerm)?.id ?? data.find(t => t.status === 'ACTIVE')?.id ?? data[0]?.id ?? ''); setLoading(false)
+        if (entryTerm && !data.some(t => t.id === entryTerm)) setError('The linked term is unavailable. Choose a term below.')
+      }
     }).catch((err: unknown) => { if (live) { setError(report(err)); setLoading(false) } })
     return () => { live = false }
-  }, [report])
+  }, [report, entryTerm])
   useEffect(() => {
     if (!selected) return
     let live = true
