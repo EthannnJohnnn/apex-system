@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { ApiError, apiRequest } from '../api/auth'
-import { useSearchParams } from 'react-router'
+import { Link as RouterLink, useSearchParams } from 'react-router'
+import { termLink } from '../dashboard'
 
 interface Term { id: string; name: string; status: 'DRAFT' | 'ACTIVE' | 'CLOSED' }
 interface Total { memberId: string; memberCode: string; name: string; active: boolean; eligible: boolean; total: number }
@@ -118,7 +119,7 @@ export function Points({ onSessionExpired }: { onSessionExpired: () => void }) {
         <Typography>{entry.reason}</Typography>
         <Typography variant="body2" color="text.secondary">{entry.actor} · {new Date(entry.recordedAt).toLocaleString()}</Typography>
         {(entry.reversesId || entry.replacesId) && <Typography variant="body2">{entry.reversesId ? 'Reverses' : 'Replaces'} entry #{current.entries.find(e => e.id === (entry.reversesId ?? entry.replacesId))?.sequence}</Typography>}
-        {entry.activityId && <Typography variant="body2">Attendance-linked entry. Correct its status on the Activities & attendance page.</Typography>}
+        {entry.activityId && <Button component={RouterLink} to={termLink('/activities', current.term.id, entry.activityId)} sx={{ alignSelf: 'flex-start' }}>View source attendance</Button>}
         {entry.warningId && <Typography variant="body2">Incident-linked entry. Use Warnings to cancel and reverse its deduction.</Typography>}
         {!entry.activityId && !entry.warningId && entry.kind !== 'REVERSAL' && !reversed.has(entry.id) && current.term.status !== 'DRAFT' && <Button disabled={busy} onClick={() => open(members.get(entry.memberId)!,entry)}>{current.term.status === 'CLOSED' ? 'Correct closed-term entry' : 'Correct entry'}</Button>}
       </Stack>)}

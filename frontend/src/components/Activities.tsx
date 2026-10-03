@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Alert, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material'
 import { ApiError, apiRequest } from '../api/auth'
 import { useSearchParams } from 'react-router'
+import { attendanceNotice, attendanceReadiness, type AttendanceAction } from '../attendanceFeedback'
 
 type Status = 'PRESENT' | 'LATE' | 'EXCUSED' | 'ABSENT'
 const statuses: Status[] = ['PRESENT', 'LATE', 'EXCUSED', 'ABSENT']
@@ -11,7 +12,7 @@ export interface Activity { id: string; termId: string; title: string; kind: 'ME
 interface Attendee { memberId: string; name: string; memberCode: string; status: Status | null; eligibleSnapshot: boolean | null; points: number }
 interface History { id: string; memberId: string | null; action: string; oldStatus: string | null; newStatus: string | null; oldPoints: number | null; newPoints: number | null; reason: string; actor: string; recordedAt: string }
 interface View { activity: Activity; termStatus: string; attendees: Attendee[]; history: History[] }
-interface Request { path: string; method: string; body: object }
+interface Request { path: string; method: string; body: object; action: AttendanceAction }
 type DialogState = { type: 'create' | 'edit' | 'finalize' | 'cancel' | 'correct'; member?: Attendee }
 const formatTime = (value: string) => new Date(value).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
 const localInput = (value: string) => new Date(new Date(value).getTime() + 8 * 3600000).toISOString().slice(0, 16)
@@ -36,6 +37,7 @@ export function Activities({ onSessionExpired }: { onSessionExpired: () => void 
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [reloadOpen, setReloadOpen] = useState(false)
   const report = useCallback((err: unknown) => {
     if (err instanceof ApiError && err.status === 401) onSessionExpired()
     return err instanceof ApiError ? err.message : 'Connection interrupted. Retry the same request, or reload and check the activity before starting another action.'
@@ -85,7 +87,7 @@ export function Activities({ onSessionExpired }: { onSessionExpired: () => void 
       const result: View = await (await apiRequest(request.path, request.method, request.body)).json()
       show(result); setDialog(null); setPending(null)
       setActivities(rows => [result.activity, ...rows.filter(a => a.id !== result.activity.id)].sort((a,b) => b.scheduledAt.localeCompare(a.scheduledAt)))
-      setNotice('Saved successfully. Attendance and any point changes are stored together.')
+      setNotice(attendanceNotice(request.action))
     } catch (err) {
       setError(report(err))
       if (err instanceof ApiError && err.status < 500) setPending(null)
@@ -95,6 +97,7 @@ export function Activities({ onSessionExpired }: { onSessionExpired: () => void 
   const dirty = !!view && view.attendees.some(m => (marks[m.memberId] ?? '') !== (m.status ?? ''))
   const locked = busy || loading || !!pending
   const canDraft = activity?.status === 'DRAFT' && view?.termStatus === 'ACTIVE'
+  const unmarked = view?.attendees.filter(m => !marks[m.memberId]).length ?? 0
   function openDialog(type: DialogState['type'], member?: Attendee) {
     setError(''); setNotice(''); setDialog({ type, member })
     if (type === 'create') setRoster(members.filter(m => m.active).map(m => m.id))
@@ -108,25 +111,29 @@ export function Activities({ onSessionExpired }: { onSessionExpired: () => void 
     const common = { requestId: crypto.randomUUID(), version: activity?.version, reason: String(values.get('reason') ?? '') }
     if (dialog.type === 'create' || dialog.type === 'edit') {
       const body = { ...common, termId: dialog.type === 'create' ? termId : activity?.termId, title: String(values.get('title')), kind: String(values.get('kind')), scheduledAt: String(values.get('schedule')) + ':00+08:00', location: String(values.get('location')), description: String(values.get('description')), memberIds: roster }
-      void send({ path: base + (dialog.type === 'edit' ? '/' + activity?.id : ''), method: dialog.type === 'edit' ? 'PUT' : 'POST', body })
+      void send({ path: base + (dialog.type === 'edit' ? '/' + activity?.id : ''), method: dialog.type === 'edit' ? 'PUT' : 'POST', body, action: dialog.type })
     } else {
       const suffix = dialog.type === 'correct' ? view?.termStatus === 'CLOSED' ? 'closed-corrections' : 'corrections' : dialog.type
-      void send({ path: `${base}/${activity?.id}/${suffix}`, method: 'POST', body: { ...common, memberId: dialog.member?.memberId, status: values.get('status') } })
+      void send({ path: `${base}/${activity?.id}/${suffix}`, method: 'POST', body: { ...common, memberId: dialog.member?.memberId, status: values.get('status') }, action: dialog.type })
     }
   }
   const rosterOptions = members.filter(m => m.active || (dialog?.type === 'edit' && view?.attendees.some(a => a.memberId === m.id)))
   return <Stack spacing={3}>
-    <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}><Typography color="text.secondary">Create an activity, save attendance, then finalize its points.</Typography><Button disabled={busy} onClick={reload}>Reload activities</Button></Stack>
+    <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}><Typography color="text.secondary">Save attendance as a draft. Points apply only after finalization.</Typography><Button disabled={busy} onClick={() => { if (dirty || pending) setReloadOpen(true); else void reload() }}>Reload activities</Button></Stack>
     {error && !dialog && <Alert severity="error">{error}</Alert>}{notice && <Alert severity="success">{notice}</Alert>}
-    {pending && !dialog && <Alert severity="warning" action={<Button disabled={busy} onClick={() => void send(pending)}>Retry same request</Button>}>The save result is not confirmed. Other actions are locked until you retry or reload.</Alert>}
+    {pending && busy && !dialog && <Typography role="status">Saving…</Typography>}
+    {pending && !busy && !dialog && <Alert severity="warning" action={<Button onClick={() => void send(pending)}>Retry same request</Button>}>We couldn't confirm whether the save completed. Retry the same request, or reload to check the saved record. Reload replaces local edits with saved data.</Alert>}
     {loading && <Typography role="status">Loading activities…</Typography>}
     {!loading && terms.length === 0 && <Alert severity="info">Create and activate an academic term in Settings first.</Alert>}
     {terms.length > 0 && <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}><TextField select label="Activity term" value={termId} disabled={locked || dirty} onChange={e => { setTermId(e.target.value); setActivities([]); setView(null); setError(''); setNotice('') }} sx={{ flex: 1 }}>{terms.map(t => <MenuItem key={t.id} value={t.id}>{t.name} ({t.status})</MenuItem>)}</TextField><Button variant="contained" disabled={locked || dirty || terms.find(t => t.id === termId)?.status !== 'ACTIVE'} onClick={() => openDialog('create')}>Create activity</Button></Stack>}
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: '280px minmax(0,1fr)' }, gap: 3 }}>
       <Stack spacing={1} aria-label="Activity list">{activities.length === 0 && termId && <Typography color="text.secondary">No activities in this term yet.</Typography>}{activities.map(a => <Button key={a.id} variant={activity?.id === a.id ? 'contained' : 'outlined'} disabled={locked || dirty} onClick={() => void openActivity(a.id)} sx={{ justifyContent: 'flex-start', textAlign: 'left', textTransform: 'none', p: 2 }}><Box>{a.title}<Typography variant="caption" component="div">{a.kind} · {a.status}<br />{formatTime(a.scheduledAt)}</Typography></Box></Button>)}</Stack>
       {view && activity ? <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, minWidth: 0 }}><Stack spacing={2}>
+        <Typography variant="subtitle2">{terms.find(t => t.id === activity.termId)?.name} · {view.termStatus} term</Typography>
         <Box><Chip size="small" label={`${activity.kind} · ${activity.status}`} /><Typography component="h2" variant="h5" sx={{ mt: 1, overflowWrap: 'anywhere' }}>{activity.title}</Typography><Typography>{formatTime(activity.scheduledAt)} · Asia/Manila</Typography>{activity.location && <Typography color="text.secondary">{activity.location}</Typography>}{activity.description && <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{activity.description}</Typography>}</Box>
         <Alert severity="info">Saved scoring: Present +{activity.presentPoints}, Late +{activity.latePoints}, Excused / Absent 0. Only eligible attendees earn points. Eligibility is checked at the scheduled time and frozen on finalization.</Alert>
+        {activity.status === 'DRAFT' && <Typography variant="body2">Draft — no attendance points applied.</Typography>}
+        {activity.status === 'FINALIZED' && <Typography variant="body2">Finalized — scoring has been applied. To fix a status, choose Correct beside the member. Original attendance and points remain in history.</Typography>}
         <Typography variant="body2" color="text.secondary">15-minute grace period: arrivals through {formatTime(new Date(new Date(activity.scheduledAt).getTime() + 15 * 60000).toISOString())} may be marked Present. The president confirms each status; a very late arrival is never automatically marked Absent.</Typography>
         {canDraft && <Stack direction="row" spacing={1}><Button disabled={locked || dirty} onClick={() => openDialog('edit')}>Edit details / roster</Button><Button disabled={locked || dirty} onClick={() => openDialog('cancel')}>Cancel draft</Button></Stack>}
         {canDraft && <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}><FormControlLabel control={<Checkbox disabled={locked} checked={checked.length === view.attendees.length} indeterminate={checked.length > 0 && checked.length < view.attendees.length} onChange={e => setChecked(e.target.checked ? view.attendees.map(m => m.memberId) : [])} />} label="Select all" /><TextField select size="small" label="Bulk status" value={bulk} disabled={locked} onChange={e => setBulk(e.target.value as Status)} sx={{ minWidth: 140 }}>{statuses.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}</TextField><Button disabled={locked || checked.length === 0} onClick={() => setMarks(previous => ({ ...previous, ...Object.fromEntries(checked.map(id => [id, bulk])) }))}>Apply to selected ({checked.length})</Button></Stack>}
@@ -137,7 +144,8 @@ export function Activities({ onSessionExpired }: { onSessionExpired: () => void 
           {activity.status === 'FINALIZED' && <Button disabled={locked} onClick={() => openDialog('correct', member)}>{view.termStatus === 'CLOSED' ? 'Correct closed term' : 'Correct'}</Button>}
         </Stack>)}
         {dirty && <Alert severity="warning">Unsaved attendance. Save the draft before switching activities or finalizing. Leaving this page discards unsaved changes.</Alert>}
-        {canDraft && <Stack direction="row" spacing={1}><Button variant="outlined" disabled={locked || !dirty} onClick={() => void send({ path: `/api/v1/activities/${activity.id}/attendance`, method: 'PUT', body: { requestId: crypto.randomUUID(), version: activity.version, marks: view.attendees.map(m => ({ memberId: m.memberId, status: marks[m.memberId] || null })) } })}>Save draft</Button><Button variant="contained" disabled={locked || dirty || view.attendees.some(m => !m.status)} onClick={() => openDialog('finalize')}>Finalize attendance</Button></Stack>}
+        {canDraft && <Typography variant="body2" role="status">{view.attendees.length - unmarked} / {view.attendees.length} marked. {attendanceReadiness(unmarked, dirty)}</Typography>}
+        {canDraft && <Stack direction="row" spacing={1}><Button variant="outlined" disabled={locked || !dirty} onClick={() => void send({ path: `/api/v1/activities/${activity.id}/attendance`, method: 'PUT', action: 'attendance', body: { requestId: crypto.randomUUID(), version: activity.version, marks: view.attendees.map(m => ({ memberId: m.memberId, status: marks[m.memberId] || null })) } })}>Save draft</Button><Button variant="contained" disabled={locked || dirty || view.attendees.some(m => !m.status)} onClick={() => openDialog('finalize')}>Finalize attendance</Button></Stack>}
         <Button onClick={() => setHistoryOpen(!historyOpen)}>{historyOpen ? 'Hide history' : 'Show history'}</Button>
         {historyOpen && view.history.map(h => <Box key={h.id} sx={{ borderLeft: 3, borderColor: 'divider', pl: 2 }}><Typography variant="body2" sx={{ fontWeight: 600 }}>{h.action} {h.memberId ? `· ${view.attendees.find(m => m.memberId === h.memberId)?.name ?? members.find(m => m.id === h.memberId)?.name ?? 'Former attendee'}` : ''}</Typography>{h.newStatus && <Typography variant="body2">{h.oldStatus ?? 'Unmarked'} → {h.newStatus} · {h.oldPoints ?? 0} → {h.newPoints ?? 0} pts</Typography>}<Typography variant="body2">{h.reason}</Typography><Typography variant="caption" color="text.secondary">{h.actor} · {formatTime(h.recordedAt)}</Typography></Box>)}
       </Stack></Paper> : <Paper variant="outlined" sx={{ p: 4 }}><Typography color="text.secondary">Choose an activity to open its attendance checklist.</Typography></Paper>}
@@ -145,7 +153,7 @@ export function Activities({ onSessionExpired }: { onSessionExpired: () => void 
     <Dialog open={!!dialog} onClose={() => { if (!locked) setDialog(null) }} fullWidth maxWidth="sm"><Box component="form" onSubmit={submit}>
       <DialogTitle>{dialog?.type === 'create' ? 'Create activity' : dialog?.type === 'edit' ? 'Edit activity draft' : dialog?.type === 'finalize' ? 'Finalize attendance?' : dialog?.type === 'cancel' ? 'Cancel attendance draft?' : 'Correct attendance'}</DialogTitle>
       <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
-        {error && <Alert severity="error">{error}</Alert>}{pending && <Alert severity="warning">Save result unconfirmed. Retry preserves the original request. To discard the form, close it and reload the activity before starting another action.</Alert>}
+        {error && <Alert severity="error">{error}</Alert>}{pending && busy && <Typography role="status">Saving…</Typography>}{pending && !busy && <Alert severity="warning">We couldn't confirm whether the save completed. Retry preserves the original request. You can also close this form and reload to check the saved record; reloading replaces local edits.</Alert>}
         {(dialog?.type === 'create' || dialog?.type === 'edit') ? <>
           <TextField name="title" label="Activity title" required defaultValue={dialog.type === 'edit' ? activity?.title : ''} disabled={locked} slotProps={{ htmlInput: { maxLength: 150 } }} />
           <TextField name="kind" label="Activity type" select defaultValue={dialog.type === 'edit' ? activity?.kind : 'MEETING'} disabled={locked || dialog.type === 'edit'}>{['MEETING','EVENT'].map(k => <MenuItem key={k} value={k}>{k}</MenuItem>)}</TextField>
@@ -164,5 +172,10 @@ export function Activities({ onSessionExpired }: { onSessionExpired: () => void 
       </Stack></DialogContent>
       <DialogActions><Button disabled={busy} onClick={() => setDialog(null)}>Close</Button>{pending ? <Button disabled={busy} onClick={() => void send(pending)}>Retry same request</Button> : <Button type="submit" variant="contained" disabled={busy || ((dialog?.type === 'create' || dialog?.type === 'edit') && roster.length === 0)}>{busy ? 'Saving…' : dialog?.type === 'finalize' ? 'Confirm finalization' : 'Save'}</Button>}</DialogActions>
     </Box></Dialog>
+    <Dialog open={reloadOpen} onClose={() => setReloadOpen(false)} aria-labelledby="reload-attendance-title">
+      <DialogTitle id="reload-attendance-title">Reload saved attendance?</DialogTitle>
+      <DialogContent><Typography>Reloading replaces your local edits with the saved record. If a save was interrupted, it may already have completed. Check the reloaded activity and history before making another change.</Typography></DialogContent>
+      <DialogActions><Button onClick={() => setReloadOpen(false)}>Keep current view</Button><Button onClick={() => { setReloadOpen(false); void reload() }}>Reload saved data</Button></DialogActions>
+    </Dialog>
   </Stack>
 }
