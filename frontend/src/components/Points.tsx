@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, MenuItem, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { ApiError, apiRequest } from '../api/auth'
 import { Link as RouterLink, useSearchParams } from 'react-router'
 import { termLink } from '../dashboard'
+import { HelpDetails } from './HelpDetails'
 
 interface Term { id: string; name: string; status: 'DRAFT' | 'ACTIVE' | 'CLOSED' }
 interface Total { memberId: string; memberCode: string; name: string; active: boolean; eligible: boolean; total: number }
@@ -88,12 +89,10 @@ export function Points({ onSessionExpired }: { onSessionExpired: () => void }) {
   const members = new Map(current?.totals.map(m => [m.memberId, m]))
   const entries = current?.entries.filter(e => !filter || e.memberId === filter) ?? []
   return <Stack spacing={2.5}>
-    <Divider />
-    <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <Typography component="h2" variant="h5">Point ledger</Typography>
+    <Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'center' }}>
       <Button onClick={reload} disabled={busy}>Reload ledger</Button>
     </Stack>
-    <Typography variant="body2" color="text.secondary">Every total comes from its history. Awards add points; deductions subtract points. Corrections preserve the original entry.</Typography>
+    <HelpDetails label="About points"><Typography variant="body2">Awards add points; deductions subtract points. Totals include corrections. Original entries remain in history.</Typography></HelpDetails>
     {error && <Alert severity="error">{error}</Alert>}{notice && <Alert severity="success">{notice}</Alert>}
     {loading && <Typography role="status">Loading terms…</Typography>}
     {!loading && terms.length === 0 && <Alert severity="info">Create and activate an academic term in Settings, then return to Point ledger.</Alert>}
@@ -103,13 +102,13 @@ export function Points({ onSessionExpired }: { onSessionExpired: () => void }) {
     {selected && !current && !error && <Typography role="status">Loading ledger…</Typography>}
     {current && <>
       {current.term.status !== 'ACTIVE' && <Alert severity="info">{current.term.status === 'CLOSED' ? 'Closed term: no new awards or deductions. Use an explicit closed-term correction with a reason to fix history.' : 'Draft term: activate it before recording points.'}</Alert>}
-      <Typography component="h3" variant="h6">Member totals</Typography>
+      <Typography component="h2" variant="h6">Member totals</Typography>
       {current.totals.length === 0 && <Typography>Add members before recording points.</Typography>}
       {current.totals.map(member => <Stack key={member.memberId} direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' }, border: 1, borderColor: 'divider', p: 2, borderRadius: 1 }}>
         <Box><Typography sx={{ fontWeight: 700 }}>{member.name} — {member.total} points</Typography><Typography variant="body2">{member.memberCode} · {member.active ? 'Active' : 'Inactive'} · {member.eligible ? 'Points eligible' : 'Ineligible'}</Typography></Box>
         <Button disabled={busy || current.term.status !== 'ACTIVE' || !member.active || !member.eligible} onClick={() => open(member)}>Award / deduct</Button>
       </Stack>)}
-      <Typography component="h3" variant="h6">Transaction history</Typography>
+      <Typography component="h2" variant="h6">Transaction history</Typography>
       <TextField select label="History member" value={filter} onChange={e => setFilter(e.target.value)}>
         <MenuItem value="">All members</MenuItem>{current.totals.map(m => <MenuItem key={m.memberId} value={m.memberId}>{m.name} ({m.memberCode})</MenuItem>)}
       </TextField>

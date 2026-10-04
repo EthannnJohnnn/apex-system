@@ -3,6 +3,10 @@ import { createTheme } from '@mui/material/styles'
 export const apexTheme = createTheme({
   typography: {
     fontFamily: 'Outfit, system-ui, sans-serif',
+    h4: { fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.25 },
+    h5: { fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.3 },
+    h6: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.4 },
+    button: { textTransform: 'none', fontWeight: 600 },
   },
   colorSchemes: {
     light: {

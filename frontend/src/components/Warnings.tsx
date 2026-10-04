@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Alert, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material'
 import { ApiError, apiRequest } from '../api/auth'
+import { HelpDetails } from './HelpDetails'
 import type { Activity } from './Activities'
 
 interface Term { id: string; name: string; status: string }
@@ -98,7 +99,7 @@ export function Warnings({ onSessionExpired }: { onSessionExpired: () => void })
   }
   const visible = records.filter(w => (status === 'ALL' || w.status === status) && `${w.memberName} ${w.incident}`.toLowerCase().includes(filter.toLowerCase()))
   return <Stack spacing={2}>
-    <Typography color="text.secondary">Record Minor/Major warnings or a deduction-only incident. Resolving a warning keeps its deduction; cancelling reverses it once.</Typography>
+    <HelpDetails label="Warning rules"><Typography variant="body2">Record Minor/Major warnings or deduction-only incidents. Resolving keeps the deduction; cancelling reverses it once.</Typography></HelpDetails>
     {error && <Alert severity="error">{error}</Alert>}{notice && <Alert severity="success">{notice}</Alert>}
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
       <TextField select label="Academic term" value={termId} disabled={busy || loading} sx={{ minWidth: 240 }} onChange={e => { setLoading(true); setRecords([]); setView(null); setNotice(''); setError(''); setTermId(e.target.value) }}>{terms.map(t => <MenuItem key={t.id} value={t.id}>{t.name} · {t.status}</MenuItem>)}</TextField>

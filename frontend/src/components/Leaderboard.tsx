@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Alert, Button, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material'
 import { ApiError, apiRequest } from '../api/auth'
 import { useSearchParams } from 'react-router'
+import { HelpDetails } from './HelpDetails'
 
 interface Term { id: string; name: string; status: string }
 export interface Ranked { rank: number; memberId: string; memberCode: string; name: string; total: number }
@@ -36,7 +37,7 @@ export function Leaderboard({ onSessionExpired }: { onSessionExpired: () => void
   }, [termId, view, revision, report])
   function reset() { setData(null); setLoading(true); setError('') }
   return <Stack spacing={2}>
-    <Typography color="text.secondary">Term totals come directly from the point ledger, including deductions and reversals. Equal totals share the same rank (1, 1, 3).</Typography>
+    <HelpDetails label="Ranking rules"><Typography variant="body2">Totals include deductions and reversals. Equal totals share a rank (1, 1, 3). Zero-point members and ties at rank 10 are included.</Typography>{data && <Typography variant="body2" sx={{ mt: 1 }}>{data.eligibilityBasis}</Typography>}</HelpDetails>
     {error && <Alert severity="error">{error}</Alert>}
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
       <TextField select label="Leaderboard term" value={termId} sx={{ minWidth: 250 }} onChange={e => { reset(); setTermId(e.target.value) }}>{terms.map(t => <MenuItem value={t.id} key={t.id}>{t.name} · {t.status}</MenuItem>)}</TextField>
@@ -45,8 +46,7 @@ export function Leaderboard({ onSessionExpired }: { onSessionExpired: () => void
     </Stack>
     {loading && <Typography role="status">Loading rankings…</Typography>}
     {!loading && !termId && <Alert severity="info">Create an academic term in Settings first.</Alert>}
-    {data && <><Typography variant="body2">{data.eligibilityBasis} Showing {data.members.length} of {data.eligibleCount} eligible members. Zero-point members are included.</Typography>
-      {view === 'top10' && <Typography variant="body2" color="text.secondary">Ties at rank 10 are included, so this view may contain more than ten members.</Typography>}
+    {data && <><Typography variant="body2">{data.members.length} / {data.eligibleCount} eligible members</Typography>
       <TableContainer component={Paper} variant="outlined"><Table aria-label="Member leaderboard"><TableHead><TableRow><TableCell>Rank</TableCell><TableCell>Member</TableCell><TableCell>Member ID</TableCell><TableCell align="right">Points</TableCell></TableRow></TableHead><TableBody>{data.members.map(m => <TableRow key={m.memberId}><TableCell>{m.rank}</TableCell><TableCell component="th" scope="row">{m.name}</TableCell><TableCell>{m.memberCode}</TableCell><TableCell align="right">{m.total}</TableCell></TableRow>)}</TableBody></Table></TableContainer>
       {!data.members.length && <Typography>No eligible members for this term.</Typography>}
     </>}

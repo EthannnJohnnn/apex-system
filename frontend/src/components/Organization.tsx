@@ -102,7 +102,7 @@ export function Organization({ onSessionExpired }: { onSessionExpired: () => voi
     {settings ? <Box component="form" key={settings.version} onSubmit={saveSettings}>
       <Stack spacing={2}>
         <TextField label="Organization name" name="organizationName" defaultValue={settings.organizationName} required slotProps={{ htmlInput: { maxLength: 150 } }} />
-        <Typography variant="body2" color="text.secondary">Default points for new activities. Existing activities retain their saved values. Excused and absent remain 0. Manual awards and term totals are available on the Point ledger page.</Typography>
+        <Typography variant="body2" color="text.secondary">Defaults for new activities only. Excused / Absent: 0 points.</Typography>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
           {pointFields.map(([key, label]) => <TextField key={key} label={label} name={key} type="number" defaultValue={settings[key]} required slotProps={{ htmlInput: { min: 0, max: 1000, step: 1 } }} />)}
         </Box>

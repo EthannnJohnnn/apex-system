@@ -89,13 +89,11 @@ export function Members({ onSessionExpired }: { onSessionExpired: () => void }) 
   const visible = members.filter(m => (filter === 'all' || m.active === (filter === 'active')) &&
     [m.name, m.memberCode, m.position].some(value => value.toLowerCase().includes(query)))
 
-  return <Box component="section" aria-label="Members" sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 3 }}>
+  return <Box component="section" aria-label="Members">
     <Stack spacing={2}>
-      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-        <Typography variant="h5" component="h2">Members</Typography>
+      <Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'center', gap: 2 }}>
         <Button variant="contained" onClick={() => start(null)}>Add member</Button>
       </Stack>
-      <Typography color="text.secondary">Member records, not accounts. Deactivation preserves history.</Typography>
       {notice && <Alert severity="success" role="status">{notice}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>

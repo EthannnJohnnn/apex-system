@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router'
-import { Alert, Box, Button, Chip, Dialog, DialogContent, DialogTitle, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, Dialog, DialogContent, DialogTitle, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Stack, Typography } from '@mui/material'
 import AccountCircleOutlined from '@mui/icons-material/AccountCircleOutlined'
 import CloseOutlined from '@mui/icons-material/CloseOutlined'
 import { ConnectionStatus } from './ConnectionStatus'
@@ -25,7 +25,7 @@ import LeaderboardOutlined from '@mui/icons-material/LeaderboardOutlined'
 const pages = [
   { path: '/', label: 'Dashboard', icon: <DashboardOutlined /> },
   { path: '/members', label: 'Members', icon: <PeopleOutline /> },
-  { path: '/activities', label: 'Activities & attendance', icon: <EventOutlined /> },
+  { path: '/activities', label: 'Attendance', icon: <EventOutlined /> },
   { path: '/points', label: 'Point ledger', icon: <ReceiptLongOutlined /> },
   { path: '/leaderboard', label: 'Leaderboard', icon: <LeaderboardOutlined /> },
   { path: '/warnings', label: 'Warnings', icon: <FlagOutlined /> },
@@ -41,15 +41,14 @@ export function Workspace({ username, busy, logout, onSessionExpired, account, m
   const location = useLocation()
   const title = pages.find(p => p.path === location.pathname)?.label ?? 'Dashboard'
   const sidebar = <Stack sx={{ height: '100%' }}>
-    <Box sx={{ px: 3, py: 2 }}><ApexLogo /><Typography variant="overline" color="text.secondary">President workspace</Typography></Box>
+    <Box sx={{ px: 3, py: 2 }}><ApexLogo /></Box>
     <Divider />
-    <List component="nav" aria-label="Main navigation" sx={{ px: 1.5, py: 2 }}>
+    <List component="nav" aria-label="Main navigation" sx={{ px: 1.5, py: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
       {pages.map(page => <ListItemButton key={page.path} component={NavLink} to={page.path} end={page.path === '/'} onClick={() => setOpen(false)}
-        sx={{ borderRadius: 1.5, mb: .5, '&.active': { bgcolor: 'action.selected', color: 'primary.main', '& .MuiListItemIcon-root': { color: 'primary.main' } } }}>
+        sx={{ borderRadius: 1.5, mb: .5, flexGrow: 0, mt: page.path === '/settings' ? 'auto' : 0, '&.active': { bgcolor: 'action.selected', color: 'primary.main', '& .MuiListItemIcon-root': { color: 'primary.main' } } }}>
         <ListItemIcon sx={{ minWidth: 36 }}>{page.icon}</ListItemIcon><ListItemText primary={page.label} slotProps={{ primary: { sx: { fontSize: 14, fontWeight: 600 } } }} />
       </ListItemButton>)}
     </List>
-    <Box sx={{ mt: 'auto', p: 3 }}><Chip size="small" label="Laptop only" variant="outlined" /><Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>One organization.<br />One focused workspace.</Typography></Box>
   </Stack>
   return <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
     <Box component="a" href="#main-content" sx={{ position: 'fixed', top: -100, left: 16, zIndex: 1500, p: 1, bgcolor: 'background.paper', '&:focus': { top: 8 } }} onClick={e => { e.preventDefault(); document.getElementById('main-content')?.focus() }}>Skip to content</Box>
@@ -64,7 +63,7 @@ export function Workspace({ username, busy, logout, onSessionExpired, account, m
       </Box>
       <Box component="main" id="main-content" tabIndex={-1} sx={{ p: { xs: 2, lg: 4 }, maxWidth: 1500, mx: 'auto' }}>
         <Stack spacing={3}>
-          <Box><Typography variant="overline" color="primary">{location.pathname === '/' ? `Welcome back, ${username}` : 'Organization management'}</Typography><Typography component="h1" variant="h4" sx={{ fontWeight: 700 }}>{title}</Typography></Box>
+          <Typography component="h1" variant="h4">{title}</Typography>
           {message && <Alert severity="error">{message}</Alert>}
           <Routes>
             <Route path="/" element={<Dashboard onSessionExpired={onSessionExpired} />} />
@@ -76,7 +75,7 @@ export function Workspace({ username, busy, logout, onSessionExpired, account, m
             <Route path="/leaderboard" element={<Leaderboard onSessionExpired={onSessionExpired} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          <Stack component="footer" spacing={1} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}><ConnectionStatus /><Typography variant="caption" color="text.secondary">Apex · Local president workspace · Members are records, not accounts.</Typography></Stack>
+          <Stack component="footer" spacing={1} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}><ConnectionStatus /></Stack>
         </Stack>
       </Box>
     </Box>
