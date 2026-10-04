@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Alert, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { ApiError, apiRequest } from '../api/auth'
+import { ExcelExport } from './ExcelExport'
 
 type Category = 'MEMBER' | 'OFFICER' | 'EXECUTIVE' | 'PRESIDENT'
 interface Member {
@@ -92,6 +93,7 @@ export function Members({ onSessionExpired }: { onSessionExpired: () => void }) 
   return <Box component="section" aria-label="Members">
     <Stack spacing={2}>
       <Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'center', gap: 2 }}>
+        <ExcelExport kind="members" onSessionExpired={onSessionExpired} />
         <Button variant="contained" onClick={() => start(null)}>Add member</Button>
       </Stack>
       {notice && <Alert severity="success" role="status">{notice}</Alert>}

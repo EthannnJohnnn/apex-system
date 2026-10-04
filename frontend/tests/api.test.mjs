@@ -5,6 +5,21 @@ import { ApiError, apiRequest } from '../src/api/auth.ts'
 afterEach(() => mock.restoreAll())
 const token = () => Response.json({ headerName: 'X-CSRF-TOKEN', token: 'fictional-token' })
 
+test('Excel exports preserve binary bytes and use a read-only authenticated request', async () => {
+  const bytes = new Uint8Array([80, 75, 3, 4, 0, 255])
+  const fetch = mock.method(globalThis, 'fetch', async () => new Response(bytes, {
+    headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+  }))
+  const response = await apiRequest('/api/v1/exports/members?termId=fictional-term')
+  assert.deepEqual(new Uint8Array(await (await response.blob()).arrayBuffer()), bytes)
+  assert.equal(fetch.mock.callCount(), 1)
+  const [, options] = fetch.mock.calls[0].arguments
+  assert.equal(options.method, 'GET')
+  assert.equal(options.credentials, 'same-origin')
+  assert.equal(options.cache, 'no-store')
+  assert.equal(options.body, undefined)
+})
+
 test('offline before CSRF rejects without sending a write', async () => {
   const fetch = mock.method(globalThis, 'fetch', async () => { throw new TypeError('Failed to fetch') })
   await assert.rejects(apiRequest('/api/v1/members', 'POST', { name: 'Fictional' }), TypeError)

@@ -4,6 +4,7 @@ import { ApiError, apiRequest } from '../api/auth'
 import { useSearchParams } from 'react-router'
 import { attendanceNotice, attendanceReadiness, type AttendanceAction } from '../attendanceFeedback'
 import { HelpDetails } from './HelpDetails'
+import { ExcelExport } from './ExcelExport'
 
 type Status = 'PRESENT' | 'LATE' | 'EXCUSED' | 'ABSENT'
 const statuses: Status[] = ['PRESENT', 'LATE', 'EXCUSED', 'ABSENT']
@@ -120,7 +121,7 @@ export function Activities({ onSessionExpired }: { onSessionExpired: () => void 
   }
   const rosterOptions = members.filter(m => m.active || (dialog?.type === 'edit' && view?.attendees.some(a => a.memberId === m.id)))
   return <Stack spacing={3}>
-    <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}><Typography variant="body2" color="text.secondary">Points apply after finalization.</Typography><Button disabled={busy} onClick={() => { if (dirty || pending) setReloadOpen(true); else void reload() }}>Refresh</Button></Stack>
+    <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}><Typography variant="body2" color="text.secondary">Points apply after finalization.</Typography><Stack direction="row" spacing={1}><ExcelExport kind="events" initialTermId={termId} disabled={busy || dirty || !!pending || loading} onSessionExpired={onSessionExpired} /><Button disabled={busy} onClick={() => { if (dirty || pending) setReloadOpen(true); else void reload() }}>Refresh</Button></Stack></Stack>
     {error && !dialog && <Alert severity="error">{error}</Alert>}{notice && <Alert severity="success">{notice}</Alert>}
     {pending && busy && !dialog && <Typography role="status">Saving…</Typography>}
     {pending && !busy && !dialog && <Alert severity="warning" action={<Button onClick={() => void send(pending)}>Retry same request</Button>}>We couldn't confirm whether the save completed. Retry the same request, or reload to check the saved record. Reload replaces local edits with saved data.</Alert>}
