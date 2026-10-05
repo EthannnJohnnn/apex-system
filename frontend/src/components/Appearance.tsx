@@ -4,7 +4,7 @@ import { useColorScheme } from '@mui/material/styles'
 export function ApexLogo() {
   const { mode, systemMode } = useColorScheme()
   const dark = (mode === 'system' ? systemMode : mode) === 'dark'
-  return <Box component="img" src={`/brand/apex-logo-red-${dark ? 'dark' : 'light'}.svg`} alt="Apex" sx={{ width: 160, display: 'block' }} />
+  return <Box component="img" src={`/brand/apex-logo-red-${dark ? 'dark' : 'light'}.svg`} alt="Apex" sx={{ width: 110, maxWidth: '100%', height: 'auto', display: 'block' }} />
 }
 
 export function Appearance() {

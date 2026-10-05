@@ -89,16 +89,18 @@ export function Points({ onSessionExpired }: { onSessionExpired: () => void }) {
   const members = new Map(current?.totals.map(m => [m.memberId, m]))
   const entries = current?.entries.filter(e => !filter || e.memberId === filter) ?? []
   return <Stack spacing={2.5}>
-    <Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'center' }}>
-      <Button onClick={reload} disabled={busy}>Reload ledger</Button>
-    </Stack>
-    <HelpDetails label="About points"><Typography variant="body2">Awards add points; deductions subtract points. Totals include corrections. Original entries remain in history.</Typography></HelpDetails>
     {error && <Alert severity="error">{error}</Alert>}{notice && <Alert severity="success">{notice}</Alert>}
     {loading && <Typography role="status">Loading terms…</Typography>}
     {!loading && terms.length === 0 && <Alert severity="info">Create and activate an academic term in Settings, then return to Point ledger.</Alert>}
-    {terms.length > 0 && <TextField select label="Ledger term" value={selected} disabled={busy} onChange={e => { setSelected(e.target.value); setFilter(''); setError(''); setNotice('') }}>
-      {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.name} ({t.status})</MenuItem>)}
-    </TextField>}
+    <Stack spacing={1}>
+      <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+        {terms.length > 0 && <TextField size="small" select label="Ledger term" value={selected} disabled={busy} onChange={e => { setSelected(e.target.value); setFilter(''); setError(''); setNotice('') }} sx={{ flex: '1 1 260px', minWidth: 0 }}>
+          {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.name} ({t.status})</MenuItem>)}
+        </TextField>}
+        <Button onClick={reload} disabled={busy} sx={{ whiteSpace: 'nowrap' }}>Reload ledger</Button>
+      </Stack>
+      <HelpDetails label="About points"><Typography variant="body2">Awards add points; deductions subtract points. Totals include corrections. Original entries remain in history.</Typography></HelpDetails>
+    </Stack>
     {selected && !current && !error && <Typography role="status">Loading ledger…</Typography>}
     {current && <>
       {current.term.status !== 'ACTIVE' && <Alert severity="info">{current.term.status === 'CLOSED' ? 'Closed term: no new awards or deductions. Use an explicit closed-term correction with a reason to fix history.' : 'Draft term: activate it before recording points.'}</Alert>}

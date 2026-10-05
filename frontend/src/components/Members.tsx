@@ -92,18 +92,16 @@ export function Members({ onSessionExpired }: { onSessionExpired: () => void }) 
 
   return <Box component="section" aria-label="Members">
     <Stack spacing={2}>
-      <Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'center', gap: 2 }}>
-        <ExcelExport kind="members" onSessionExpired={onSessionExpired} />
-        <Button variant="contained" onClick={() => start(null)}>Add member</Button>
-      </Stack>
       {notice && <Alert severity="success" role="status">{notice}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <TextField label="Search name, ID or position" value={search} onChange={e => setSearch(e.target.value)} fullWidth />
-        <TextField select label="Show" value={filter} onChange={e => setFilter(e.target.value)} sx={{ minWidth: 155 }}>
+      <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+        <TextField size="small" label="Search name, ID or position" value={search} onChange={e => setSearch(e.target.value)} sx={{ flex: '1 1 260px', minWidth: 0 }} />
+        <TextField size="small" select label="Show" value={filter} onChange={e => setFilter(e.target.value)} sx={{ width: { xs: '100%', sm: 155 } }}>
           <MenuItem value="active">Active</MenuItem><MenuItem value="inactive">Inactive</MenuItem><MenuItem value="all">All members</MenuItem>
         </TextField>
         <Button onClick={reload} disabled={loading}>Reload</Button>
+        <ExcelExport kind="members" onSessionExpired={onSessionExpired} />
+        <Button variant="contained" onClick={() => start(null)} sx={{ whiteSpace: 'nowrap' }}>Add member</Button>
       </Stack>
       {loading ? <Typography role="status">Loading members…</Typography> : <>
         <Typography variant="body2" color="text.secondary">{visible.length} member{visible.length === 1 ? '' : 's'}</Typography>
